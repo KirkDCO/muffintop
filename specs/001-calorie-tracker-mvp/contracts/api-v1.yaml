@@ -1,0 +1,1347 @@
+openapi: 3.0.3
+info:
+  title: FeedBag API
+  description: Calorie and nutrient tracking API for LAN-hosted household use
+  version: 1.0.0
+  contact:
+    name: FeedBag
+servers:
+  - url: http://localhost:3002/api/v1
+    description: Development server
+
+tags:
+  - name: Users
+    description: User management (selection, creation, deletion)
+  - name: Foods
+    description: Food database search and custom foods
+  - name: Food Log
+    description: Daily food intake logging
+  - name: Recipes
+    description: Recipe creation and management
+  - name: Targets
+    description: Daily targets and activity logging
+  - name: Metrics
+    description: Body metrics tracking
+  - name: Stats
+    description: Daily summaries and trend data
+
+paths:
+  # ============ USERS ============
+  /users:
+    get:
+      tags: [Users]
+      summary: List all users
+      description: Returns list of users for selection screen
+      operationId: listUsers
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+
+    post:
+      tags: [Users]
+      summary: Create a new user
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: User name already exists
+
+  /users/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/userId'
+
+    get:
+      tags: [Users]
+      summary: Get user details
+      operationId: getUser
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Users]
+      summary: Delete user and all data
+      description: Permanently deletes user and all associated data (logs, recipes, metrics)
+      operationId: deleteUser
+      responses:
+        '204':
+          description: User deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============ FOODS ============
+  /foods/search:
+    get:
+      tags: [Foods]
+      summary: Search food database
+      operationId: searchFoods
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+          description: Search query
+        - name: dataType
+          in: query
+          schema:
+            type: string
+            enum: [foundation, sr_legacy, branded, all]
+            default: all
+          description: Filter by data source
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  foods:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FoodSummary'
+                  total:
+                    type: integer
+
+  /foods/{fdcId}:
+    parameters:
+      - name: fdcId
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: USDA FDC ID
+
+    get:
+      tags: [Foods]
+      summary: Get food details with portions
+      operationId: getFood
+      responses:
+        '200':
+          description: Food details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoodDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/{userId}/custom-foods:
+    parameters:
+      - $ref: '#/components/parameters/userId'
+
+    get:
+      tags: [Foods]
+      summary: List user's custom foods
+      operationId: listCustomFoods
+      responses:
+        '200':
+          description: Custom foods list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customFoods:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CustomFood'
+
+    post:
+      tags: [Foods]
+      summary: Create custom food
+      operationId: createCustomFood
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomFoodInput'
+      responses:
+        '201':
+          description: Custom food created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomFood'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /users/{userId}/custom-foods/{customFoodId}:
+    parameters:
+      - $ref: '#/components/parameters/userId'
+      - name: customFoodId
+        in: path
+        required: true
+        schema:
+          type: integer
+
+    delete:
+      tags: [Foods]
+      summary: Delete custom food
+      operationId: deleteCustomFood
+      responses:
+        '204':
+          description: Custom food deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============ FOOD LOG ============
+  /users/{userId}/food-log:
+    parameters:
+      - $ref: '#/components/parameters/userId'
+
+    get:
+      tags: [Food Log]
+      summary: Get food log entries
+      operationId: getFoodLog
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter by specific date (YYYY-MM-DD)
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Start of date range
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: End of date range
+      responses:
+        '200':
+          description: Food log entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FoodLogEntry'
+
+    post:
+      tags: [Food Log]
+      summary: Log a food item
+      operationId: createFoodLogEntry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FoodLogInput'
+      responses:
+        '201':
+          description: Entry created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoodLogEntry'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /users/{userId}/food-log/recent:
+    parameters:
+      - $ref: '#/components/parameters/userId'
+
+    get:
+      tags: [Food Log]
+      summary: Get recently logged foods (last 7 days)
+      operationId: getRecentFoods
+      responses:
+        '200':
+          description: Recent foods for quick re-logging
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recentFoods:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecentFood'
+
+  /users/{userId}/food-log/{entryId}:
+    parameters:
+      - $ref: '#/components/parameters/userId'
+      - name: entryId
+        in: path
+        required: true
+        schema:
+          type: integer
+
+    put:
+      tags: [Food Log]
+      summary: Update food log entry
+      operationId: updateFoodLogEntry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FoodLogUpdateInput'
+      responses:
+        '200':
+          description: Entry updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoodLogEntry'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Food Log]
+      summary: Delete food log entry
+      operationId: deleteFoodLogEntry
+      responses:
+        '204':
+          description: Entry deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============ RECIPES ============
+  /users/{userId}/recipes:
+    parameters:
+      - $ref: '#/components/parameters/userId'
+
+    get:
+      tags: [Recipes]
+      summary: List user's recipes
+      operationId: listRecipes
+      responses:
+        '200':
+          description: Recipe list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recipes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecipeSummary'
+
+    post:
+      tags: [Recipes]
+      summary: Create a recipe
+      operationId: createRecipe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeInput'
+      responses:
+        '201':
+          description: Recipe created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /users/{userId}/recipes/{recipeId}:
+    parameters:
+      - $ref: '#/components/parameters/userId'
+      - name: recipeId
+        in: path
+        required: true
+        schema:
+          type: integer
+
+    get:
+      tags: [Recipes]
+      summary: Get recipe details
+      operationId: getRecipe
+      responses:
+        '200':
+          description: Recipe details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Recipes]
+      summary: Update recipe
+      operationId: updateRecipe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeInput'
+      responses:
+        '200':
+          description: Recipe updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Recipes]
+      summary: Delete recipe
+      operationId: deleteRecipe
+      responses:
+        '204':
+          description: Recipe deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/{userId}/recipes/import/tblsp:
+    parameters:
+      - $ref: '#/components/parameters/userId'
+
+    get:
+      tags: [Recipes]
+      summary: List available tblsp recipes
+      operationId: listTblspRecipes
+      responses:
+        '200':
+          description: Available tblsp recipes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recipes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TblspRecipeSummary'
+
+    post:
+      tags: [Recipes]
+      summary: Import recipe from tblsp
+      operationId: importTblspRecipe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tblspRecipeId, ingredients]
+              properties:
+                tblspRecipeId:
+                  type: integer
+                name:
+                  type: string
+                  description: Override recipe name (optional)
+                servings:
+                  type: integer
+                  minimum: 1
+                  default: 1
+                ingredients:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ImportIngredientMapping'
+      responses:
+        '201':
+          description: Recipe imported
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /users/{userId}/recipes/import/tblsp/{tblspRecipeId}/preview:
+    parameters:
+      - $ref: '#/components/parameters/userId'
+      - name: tblspRecipeId
+        in: path
+        required: true
+        schema:
+          type: integer
+
+    get:
+      tags: [Recipes]
+      summary: Preview tblsp recipe for import
+      description: Returns recipe with ingredient suggestions for mapping
+      operationId: previewTblspRecipe
+      responses:
+        '200':
+          description: Recipe preview with ingredient suggestions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TblspRecipePreview'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============ TARGETS ============
+  /users/{userId}/targets:
+    parameters:
+      - $ref: '#/components/parameters/userId'
+
+    get:
+      tags: [Targets]
+      summary: Get user's daily targets
+      operationId: getTargets
+      responses:
+        '200':
+          description: User targets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyTarget'
+        '404':
+          description: Targets not set
+
+    put:
+      tags: [Targets]
+      summary: Set or update daily targets
+      operationId: updateTargets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DailyTargetInput'
+      responses:
+        '200':
+          description: Targets updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyTarget'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /users/{userId}/activity:
+    parameters:
+      - $ref: '#/components/parameters/userId'
+
+    get:
+      tags: [Targets]
+      summary: Get activity log
+      operationId: getActivityLog
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Activity entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ActivityEntry'
+
+    post:
+      tags: [Targets]
+      summary: Log activity calories for a day
+      operationId: logActivity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivityInput'
+      responses:
+        '200':
+          description: Activity logged (upsert)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityEntry'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  # ============ METRICS ============
+  /users/{userId}/metrics/weight:
+    parameters:
+      - $ref: '#/components/parameters/userId'
+
+    get:
+      tags: [Metrics]
+      summary: Get weight history
+      operationId: getWeightHistory
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Weight entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WeightEntry'
+                  latestValue:
+                    type: number
+                  latestUnit:
+                    type: string
+                  trend:
+                    type: string
+                    enum: [up, down, stable]
+
+    post:
+      tags: [Metrics]
+      summary: Log weight measurement
+      operationId: logWeight
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WeightInput'
+      responses:
+        '200':
+          description: Weight logged (upsert by date)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeightEntry'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  # ============ STATS ============
+  /users/{userId}/stats/daily:
+    parameters:
+      - $ref: '#/components/parameters/userId'
+
+    get:
+      tags: [Stats]
+      summary: Get daily summary
+      operationId: getDailySummary
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Daily summary with intake, expenditure, and progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailySummary'
+
+  /users/{userId}/stats/trends:
+    parameters:
+      - $ref: '#/components/parameters/userId'
+
+    get:
+      tags: [Stats]
+      summary: Get trend data for graphs
+      operationId: getTrends
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: metrics
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [calories, protein, carbs, sugar, weight, expenditure]
+            default: [calories]
+          description: Metrics to include
+      responses:
+        '200':
+          description: Trend data for graphing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrendData'
+
+components:
+  parameters:
+    userId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: User ID
+
+  responses:
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    FoodSummary:
+      type: object
+      properties:
+        fdcId:
+          type: integer
+        description:
+          type: string
+        dataType:
+          type: string
+        brandOwner:
+          type: string
+          nullable: true
+        calories:
+          type: number
+          nullable: true
+        protein:
+          type: number
+          nullable: true
+        carbs:
+          type: number
+          nullable: true
+        addedSugar:
+          type: number
+          nullable: true
+
+    FoodDetail:
+      allOf:
+        - $ref: '#/components/schemas/FoodSummary'
+        - type: object
+          properties:
+            portions:
+              type: array
+              items:
+                $ref: '#/components/schemas/FoodPortion'
+
+    FoodPortion:
+      type: object
+      properties:
+        id:
+          type: integer
+        gramWeight:
+          type: number
+        description:
+          type: string
+        amount:
+          type: number
+
+    CustomFood:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        calories:
+          type: number
+        protein:
+          type: number
+        carbs:
+          type: number
+        addedSugar:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+
+    CustomFoodInput:
+      type: object
+      required: [name, calories, protein, carbs, addedSugar]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        calories:
+          type: number
+          minimum: 0
+        protein:
+          type: number
+          minimum: 0
+        carbs:
+          type: number
+          minimum: 0
+        addedSugar:
+          type: number
+          minimum: 0
+
+    FoodLogEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        logDate:
+          type: string
+          format: date
+        mealCategory:
+          type: string
+          enum: [breakfast, lunch, dinner, snack]
+        foodName:
+          type: string
+        portionAmount:
+          type: number
+        portionGrams:
+          type: number
+        calories:
+          type: number
+        protein:
+          type: number
+        carbs:
+          type: number
+        addedSugar:
+          type: number
+          nullable: true
+        foodId:
+          type: integer
+          nullable: true
+        customFoodId:
+          type: integer
+          nullable: true
+        recipeId:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    FoodLogInput:
+      type: object
+      required: [logDate, mealCategory, portionGrams]
+      properties:
+        logDate:
+          type: string
+          format: date
+        mealCategory:
+          type: string
+          enum: [breakfast, lunch, dinner, snack]
+        foodId:
+          type: integer
+          description: USDA food ID (mutually exclusive with customFoodId, recipeId)
+        customFoodId:
+          type: integer
+          description: Custom food ID (mutually exclusive with foodId, recipeId)
+        recipeId:
+          type: integer
+          description: Recipe ID (mutually exclusive with foodId, customFoodId)
+        portionAmount:
+          type: number
+          minimum: 0.01
+          description: Number of portions (for display)
+        portionGrams:
+          type: number
+          minimum: 0.1
+          description: Total grams consumed
+
+    FoodLogUpdateInput:
+      type: object
+      properties:
+        logDate:
+          type: string
+          format: date
+        mealCategory:
+          type: string
+          enum: [breakfast, lunch, dinner, snack]
+        portionAmount:
+          type: number
+          minimum: 0.01
+        portionGrams:
+          type: number
+          minimum: 0.1
+
+    RecentFood:
+      type: object
+      properties:
+        foodId:
+          type: integer
+          nullable: true
+        customFoodId:
+          type: integer
+          nullable: true
+        recipeId:
+          type: integer
+          nullable: true
+        name:
+          type: string
+        lastLoggedAt:
+          type: string
+          format: date-time
+        typicalPortionGrams:
+          type: number
+
+    RecipeSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        servings:
+          type: integer
+        caloriesPerServing:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+
+    Recipe:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        servings:
+          type: integer
+        calories:
+          type: number
+        protein:
+          type: number
+        carbs:
+          type: number
+        addedSugar:
+          type: number
+          nullable: true
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeIngredient'
+        tblspRecipeId:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    RecipeIngredient:
+      type: object
+      properties:
+        id:
+          type: integer
+        foodId:
+          type: integer
+          nullable: true
+        customFoodId:
+          type: integer
+          nullable: true
+        foodName:
+          type: string
+        quantityGrams:
+          type: number
+        displayQuantity:
+          type: string
+          nullable: true
+        position:
+          type: integer
+
+    RecipeInput:
+      type: object
+      required: [name, servings, ingredients]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        servings:
+          type: integer
+          minimum: 1
+        ingredients:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [quantityGrams]
+            properties:
+              foodId:
+                type: integer
+              customFoodId:
+                type: integer
+              quantityGrams:
+                type: number
+                minimum: 0.1
+              displayQuantity:
+                type: string
+
+    TblspRecipeSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        ingredientCount:
+          type: integer
+
+    TblspRecipePreview:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        ingredients:
+          type: array
+          items:
+            type: object
+            properties:
+              originalText:
+                type: string
+              parsedName:
+                type: string
+              parsedQuantity:
+                type: string
+              suggestedFoods:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FoodSummary'
+
+    ImportIngredientMapping:
+      type: object
+      required: [originalText, quantityGrams]
+      properties:
+        originalText:
+          type: string
+        foodId:
+          type: integer
+          nullable: true
+        customFoodId:
+          type: integer
+          nullable: true
+        quantityGrams:
+          type: number
+          minimum: 0.1
+        displayQuantity:
+          type: string
+
+    DailyTarget:
+      type: object
+      properties:
+        id:
+          type: integer
+        basalCalories:
+          type: integer
+        proteinTarget:
+          type: integer
+          nullable: true
+        carbsTarget:
+          type: integer
+          nullable: true
+        sugarTarget:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    DailyTargetInput:
+      type: object
+      required: [basalCalories]
+      properties:
+        basalCalories:
+          type: integer
+          minimum: 500
+          maximum: 10000
+        proteinTarget:
+          type: integer
+          minimum: 0
+          nullable: true
+        carbsTarget:
+          type: integer
+          minimum: 0
+          nullable: true
+        sugarTarget:
+          type: integer
+          minimum: 0
+          nullable: true
+
+    ActivityEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        logDate:
+          type: string
+          format: date
+        activityCalories:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    ActivityInput:
+      type: object
+      required: [logDate, activityCalories]
+      properties:
+        logDate:
+          type: string
+          format: date
+        activityCalories:
+          type: integer
+          minimum: 0
+
+    WeightEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        metricDate:
+          type: string
+          format: date
+        weightValue:
+          type: number
+        weightUnit:
+          type: string
+          enum: [kg, lb]
+        createdAt:
+          type: string
+          format: date-time
+
+    WeightInput:
+      type: object
+      required: [metricDate, weightValue, weightUnit]
+      properties:
+        metricDate:
+          type: string
+          format: date
+        weightValue:
+          type: number
+          minimum: 20
+          maximum: 1000
+        weightUnit:
+          type: string
+          enum: [kg, lb]
+
+    DailySummary:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        intake:
+          type: object
+          properties:
+            calories:
+              type: number
+            protein:
+              type: number
+            carbs:
+              type: number
+            addedSugar:
+              type: number
+              nullable: true
+        expenditure:
+          type: object
+          properties:
+            basal:
+              type: integer
+            activity:
+              type: integer
+            total:
+              type: integer
+        targets:
+          type: object
+          nullable: true
+          properties:
+            calories:
+              type: integer
+            protein:
+              type: integer
+              nullable: true
+            carbs:
+              type: integer
+              nullable: true
+            sugar:
+              type: integer
+              nullable: true
+        progress:
+          type: object
+          properties:
+            calorieBalance:
+              type: number
+              description: intake - expenditure
+            proteinPercent:
+              type: number
+              nullable: true
+            carbsPercent:
+              type: number
+              nullable: true
+            sugarPercent:
+              type: number
+              nullable: true
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/FoodLogEntry'
+
+    TrendData:
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        dataPoints:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              calories:
+                type: number
+                nullable: true
+              protein:
+                type: number
+                nullable: true
+              carbs:
+                type: number
+                nullable: true
+              sugar:
+                type: number
+                nullable: true
+              weight:
+                type: number
+                nullable: true
+              expenditure:
+                type: number
+                nullable: true
+        targets:
+          type: object
+          nullable: true
+          properties:
+            calories:
+              type: integer
+            protein:
+              type: integer
+              nullable: true
+            carbs:
+              type: integer
+              nullable: true
+            sugar:
+              type: integer
+              nullable: true

@@ -1,0 +1,18 @@
+# FeedBag
+
+## Description
+
+A TypeScript/Node.js application that allows users to count daily calories based on an internal database of publically available calorie information.  
+
+## Requirements
+
+* Must have an internal database of nutrient content of foods, such as FoodData Central from the USDA (https://fdc.nal.usda.gov/download-datasets).
+* Must be able to create new foods from combinations of foods in the database and calcualte their overall nutrient content.  (This is creating a recipe.)
+** Integrate with tblsp project database (~/Projects/tblsp) for one method of recipe creation.
+* At minimum, track calories, protein, carbohydrate, and added sugar.
+* Allow mutliple users to track their own data.
+* Provide graphs of daily target calories (baseline and activity, given user inputs) and actual calorie intake.  
+* Provide longitudinal graphs of intake over time.
+* Allow users to track metrics such as body weight along with caloric and/or nutrient intake.
+* Graphs should be interactive and adjustable - choose metrics to track, date ranges, include target indicators, etc.
+* Designed to be hosted from a server that is accessible over a LAN.
