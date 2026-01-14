@@ -1,0 +1,198 @@
+import { useState } from 'react';
+import { useUser } from '../providers/UserProvider';
+import { useFoodLog, useRecentFoods, useCreateFoodLog, useDeleteFoodLog } from '../hooks/useFoodLog';
+import { DailySummary } from '../components/DailySummary';
+import { FoodLogEntry } from '../components/FoodLogEntry';
+import { RecentFoods } from '../components/RecentFoods';
+import { LogFoodModal } from '../components/LogFoodModal';
+import type { CreateFoodLogInput, MealCategory } from '@feedbag/shared/types';
+
+function getToday(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
+export function Dashboard() {
+  const { currentUser } = useUser();
+  const [selectedDate, setSelectedDate] = useState(getToday());
+  const [showLogModal, setShowLogModal] = useState(false);
+  const [selectedMeal, setSelectedMeal] = useState<MealCategory>('lunch');
+
+  const { data: foodLogData, isLoading: loadingLog } = useFoodLog(selectedDate);
+  const { data: recentData } = useRecentFoods();
+  const createFoodLog = useCreateFoodLog();
+  const deleteFoodLog = useDeleteFoodLog();
+
+  const handleLogFood = async (input: CreateFoodLogInput) => {
+    try {
+      await createFoodLog.mutateAsync(input);
+      setShowLogModal(false);
+    } catch (err) {
+      console.error('Failed to log food:', err);
+    }
+  };
+
+  const handleDeleteEntry = async (entryId: number) => {
+    try {
+      await deleteFoodLog.mutateAsync(entryId);
+    } catch (err) {
+      console.error('Failed to delete entry:', err);
+    }
+  };
+
+  const entries = foodLogData?.entries || [];
+  const recentFoods = recentData?.recentFoods || [];
+
+  // Group entries by meal
+  const mealOrder: MealCategory[] = ['breakfast', 'lunch', 'dinner', 'snack'];
+  const entriesByMeal = mealOrder.reduce((acc, meal) => {
+    acc[meal] = entries.filter((e) => e.mealCategory === meal);
+    return acc;
+  }, {} as Record<MealCategory, typeof entries>);
+
+  return (
+    <div className="dashboard">
+      <div className="dashboard-header">
+        <h1>Hello, {currentUser?.name}</h1>
+        <div className="date-nav">
+          <button
+            onClick={() => {
+              const d = new Date(selectedDate);
+              d.setDate(d.getDate() - 1);
+              setSelectedDate(d.toISOString().split('T')[0]);
+            }}
+          >
+            ←
+          </button>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+          />
+          <button
+            onClick={() => {
+              const d = new Date(selectedDate);
+              d.setDate(d.getDate() + 1);
+              setSelectedDate(d.toISOString().split('T')[0]);
+            }}
+            disabled={selectedDate >= getToday()}
+          >
+            →
+          </button>
+        </div>
+      </div>
+
+      <DailySummary entries={entries} date={selectedDate} />
+
+      {recentFoods.length > 0 && (
+        <RecentFoods
+          recentFoods={recentFoods}
+          date={selectedDate}
+          mealCategory={selectedMeal}
+          onQuickLog={handleLogFood}
+        />
+      )}
+
+      <div className="log-action">
+        <button className="log-button" onClick={() => setShowLogModal(true)}>
+          + Log Food
+        </button>
+      </div>
+
+      {loadingLog ? (
+        <div>Loading...</div>
+      ) : (
+        <div className="food-log">
+          {mealOrder.map((meal) => (
+            <div key={meal} className="meal-section">
+              <h3 className="meal-title">{meal}</h3>
+              {entriesByMeal[meal].length === 0 ? (
+                <p className="no-entries">No entries</p>
+              ) : (
+                <div className="entries-list">
+                  {entriesByMeal[meal].map((entry) => (
+                    <FoodLogEntry
+                      key={entry.id}
+                      entry={entry}
+                      onDelete={handleDeleteEntry}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showLogModal && (
+        <LogFoodModal
+          date={selectedDate}
+          onLog={handleLogFood}
+          onClose={() => setShowLogModal(false)}
+        />
+      )}
+
+      <style>{`
+        .dashboard-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1.5rem;
+        }
+        .dashboard-header h1 {
+          margin: 0;
+        }
+        .date-nav {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .date-nav button {
+          padding: 0.5rem 0.75rem;
+        }
+        .date-nav input {
+          padding: 0.5rem;
+        }
+        .log-action {
+          margin-bottom: 1.5rem;
+        }
+        .log-button {
+          width: 100%;
+          padding: 1rem;
+          font-size: 1.1rem;
+          background: #646cff;
+          color: white;
+          border: none;
+        }
+        .log-button:hover {
+          background: #535bf2;
+        }
+        .food-log {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+        .meal-section {
+          border: 1px solid #333;
+          border-radius: 8px;
+          padding: 1rem;
+        }
+        .meal-title {
+          margin: 0 0 0.75rem 0;
+          text-transform: capitalize;
+          font-size: 1rem;
+          color: #888;
+        }
+        .no-entries {
+          color: #555;
+          font-style: italic;
+          margin: 0;
+        }
+        .entries-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+      `}</style>
+    </div>
+  );
+}

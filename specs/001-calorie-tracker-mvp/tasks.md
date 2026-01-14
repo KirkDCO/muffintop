@@ -123,21 +123,21 @@
 
 ### Tests for User Story 2
 
-- [ ] T046 [P] [US2] Contract test for GET /foods/search in backend/tests/contract/foods.test.ts
-- [ ] T047 [P] [US2] Contract test for GET /foods/:fdcId in backend/tests/contract/foods.test.ts
+- [x] T046 [P] [US2] Contract test for GET /foods/search in backend/tests/contract/foods.test.ts
+- [x] T047 [P] [US2] Contract test for GET /foods/:fdcId in backend/tests/contract/foods.test.ts
 - [ ] T048 [P] [US2] Unit test for food search service in backend/tests/unit/food-service.test.ts
 
 ### Implementation for User Story 2
 
-- [ ] T049 [P] [US2] Create Food model in backend/src/models/food.ts
-- [ ] T050 [P] [US2] Create FoodPortion model in backend/src/models/food-portion.ts
-- [ ] T051 [US2] Implement FoodService (search with FTS5, getById) in backend/src/services/food-service.ts
-- [ ] T052 [US2] Implement /foods routes in backend/src/api/foods.ts
-- [ ] T053 [US2] Create FoodSearch component in frontend/src/components/FoodSearch.tsx
-- [ ] T054 [US2] Create FoodCard component in frontend/src/components/FoodCard.tsx
-- [ ] T055 [US2] Create FoodDetail component with portions in frontend/src/components/FoodDetail.tsx
-- [ ] T056 [US2] Implement useFoodSearch hook in frontend/src/hooks/useFoodSearch.ts
-- [ ] T057 [US2] Create foods browse page in frontend/src/pages/Foods.tsx
+- [x] T049 [P] [US2] Create Food model in backend/src/models/food.ts
+- [x] T050 [P] [US2] Create FoodPortion model in backend/src/models/food-portion.ts
+- [x] T051 [US2] Implement FoodService (search with FTS5, getById) in backend/src/services/food-service.ts
+- [x] T052 [US2] Implement /foods routes in backend/src/api/foods.ts
+- [x] T053 [US2] Create FoodSearch component in frontend/src/components/FoodSearch.tsx
+- [x] T054 [US2] Create FoodCard component in frontend/src/components/FoodCard.tsx
+- [x] T055 [US2] Create FoodDetail component with portions in frontend/src/components/FoodDetail.tsx
+- [x] T056 [US2] Implement useFoodSearch hook in frontend/src/hooks/useFoodSearch.ts
+- [x] T057 [US2] Create foods browse page in frontend/src/pages/Foods.tsx
 
 **Checkpoint**: Users can search foods and view nutritional details with portion options
 
@@ -158,18 +158,18 @@
 
 ### Implementation for User Story 1
 
-- [ ] T062 [P] [US1] Create FoodLog model in backend/src/models/food-log.ts
-- [ ] T063 [US1] Implement FoodLogService (create, update, delete, getByDate) in backend/src/services/food-log-service.ts
-- [ ] T064 [US1] Implement nutrient calculation utility in backend/src/utils/nutrient-calc.ts
-- [ ] T065 [US1] Implement recent foods query (last 7 days) in backend/src/services/food-log-service.ts
-- [ ] T066 [US1] Implement /users/:id/food-log routes in backend/src/api/food-log.ts
-- [ ] T067 [US1] Create FoodLogEntry component in frontend/src/components/FoodLogEntry.tsx
-- [ ] T068 [US1] Create LogFoodModal component in frontend/src/components/LogFoodModal.tsx
-- [ ] T069 [US1] Create DailySummary component in frontend/src/components/DailySummary.tsx
-- [ ] T070 [US1] Create RecentFoods component in frontend/src/components/RecentFoods.tsx
-- [ ] T071 [US1] Implement useFoodLog hook in frontend/src/hooks/useFoodLog.ts
-- [ ] T072 [US1] Create Dashboard page with daily log in frontend/src/pages/Dashboard.tsx
-- [ ] T073 [US1] Add edit/delete functionality to FoodLogEntry component
+- [x] T062 [P] [US1] Create FoodLog model in backend/src/models/food-log.ts
+- [x] T063 [US1] Implement FoodLogService (create, update, delete, getByDate) in backend/src/services/food-log-service.ts
+- [x] T064 [US1] Implement nutrient calculation utility in backend/src/utils/nutrient-calc.ts
+- [x] T065 [US1] Implement recent foods query (last 7 days) in backend/src/services/food-log-service.ts
+- [x] T066 [US1] Implement /users/:id/food-log routes in backend/src/api/food-log.ts
+- [x] T067 [US1] Create FoodLogEntry component in frontend/src/components/FoodLogEntry.tsx
+- [x] T068 [US1] Create LogFoodModal component in frontend/src/components/LogFoodModal.tsx
+- [x] T069 [US1] Create DailySummary component in frontend/src/components/DailySummary.tsx
+- [x] T070 [US1] Create RecentFoods component in frontend/src/components/RecentFoods.tsx
+- [x] T071 [US1] Implement useFoodLog hook in frontend/src/hooks/useFoodLog.ts
+- [x] T072 [US1] Create Dashboard page with daily log in frontend/src/pages/Dashboard.tsx
+- [x] T073 [US1] Add edit/delete functionality to FoodLogEntry component
 
 **Checkpoint**: Users can log food, view daily summary, edit/delete entries, re-log recent foods
 
