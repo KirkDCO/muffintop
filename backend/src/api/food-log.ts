@@ -41,7 +41,7 @@ foodLogRouter.post('/', validateBody(createFoodLogSchema), (req, res) => {
  * GET /users/:userId/food-log/:entryId - Get single entry
  */
 foodLogRouter.get('/:entryId', (req, res) => {
-  const entryId = parseInt(req.params.entryId, 10);
+  const entryId = parseInt(req.params.entryId as string, 10);
   const entry = foodLogService.getById(req.userId!, entryId);
   res.json(entry);
 });
@@ -50,7 +50,7 @@ foodLogRouter.get('/:entryId', (req, res) => {
  * PUT /users/:userId/food-log/:entryId - Update entry
  */
 foodLogRouter.put('/:entryId', validateBody(updateFoodLogSchema), (req, res) => {
-  const entryId = parseInt(req.params.entryId, 10);
+  const entryId = parseInt(req.params.entryId as string, 10);
   const entry = foodLogService.update(req.userId!, entryId, req.body);
   res.json(entry);
 });
@@ -59,7 +59,7 @@ foodLogRouter.put('/:entryId', validateBody(updateFoodLogSchema), (req, res) => 
  * DELETE /users/:userId/food-log/:entryId - Delete entry
  */
 foodLogRouter.delete('/:entryId', (req, res) => {
-  const entryId = parseInt(req.params.entryId, 10);
+  const entryId = parseInt(req.params.entryId as string, 10);
   foodLogService.delete(req.userId!, entryId);
   res.status(204).send();
 });

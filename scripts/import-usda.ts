@@ -7,6 +7,14 @@
  * - SR Legacy
  * - Branded Foods
  *
+ * Nutrients imported (17 total):
+ * - Energy: calories
+ * - Macros: protein, carbs, totalFat
+ * - Fats: saturatedFat, transFat, cholesterol
+ * - Carbs: fiber, totalSugar, addedSugar
+ * - Minerals: sodium, potassium, calcium, iron
+ * - Vitamins: vitaminA, vitaminC, vitaminD
+ *
  * Usage:
  *   npm run usda:download   # Download CSV files
  *   npm run usda:import     # Import into SQLite
@@ -17,17 +25,23 @@ import fs from 'fs';
 import path from 'path';
 import { createReadStream } from 'fs';
 import { createInterface } from 'readline';
+import {
+  NUTRIENT_REGISTRY,
+  ALL_NUTRIENT_KEYS,
+  getNutrientDbColumns,
+  type NutrientKey,
+} from '@muffintop/shared/types';
 
 const USDA_DB_PATH = process.env.USDA_DATABASE_PATH || './backend/db/usda/fooddata.db';
 
-// Nutrient IDs from USDA
-const NUTRIENT_IDS = {
-  calories: 1008,
-  protein: 1003,
-  carbs: 1005,
-  addedSugar: 1235,
-  totalSugar: 2000, // Fallback if added sugar not available
-};
+// Build nutrient ID to key mapping from the registry
+const NUTRIENT_ID_TO_KEY = new Map<number, NutrientKey>();
+for (const key of ALL_NUTRIENT_KEYS) {
+  NUTRIENT_ID_TO_KEY.set(NUTRIENT_REGISTRY[key].usdaId, key);
+}
+
+// Get all USDA nutrient IDs we're interested in
+const USDA_NUTRIENT_IDS = ALL_NUTRIENT_KEYS.map((k) => NUTRIENT_REGISTRY[k].usdaId);
 
 interface FoodRow {
   fdc_id: number;
@@ -55,6 +69,9 @@ export async function importUsdaData(csvDir: string): Promise<void> {
   const db = new Database(dbPath);
   db.pragma('journal_mode = WAL');
 
+  // Build nutrient column definitions dynamically
+  const nutrientColumns = getNutrientDbColumns().map((col) => `${col} REAL`).join(',\n      ');
+
   // Create schema
   db.exec(`
     CREATE TABLE IF NOT EXISTS food (
@@ -62,10 +79,7 @@ export async function importUsdaData(csvDir: string): Promise<void> {
       description TEXT NOT NULL,
       data_type TEXT NOT NULL,
       brand_owner TEXT,
-      calories REAL,
-      protein REAL,
-      carbs REAL,
-      added_sugar REAL
+      ${nutrientColumns}
     );
 
     CREATE INDEX IF NOT EXISTS idx_food_data_type ON food(data_type);

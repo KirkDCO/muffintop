@@ -2,6 +2,8 @@
  * FoodLog entity types
  */
 
+import type { NutrientValues } from './nutrients.js';
+
 export type MealCategory = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
 export interface FoodLogEntry {
@@ -11,10 +13,7 @@ export interface FoodLogEntry {
   foodName: string;
   portionAmount: number;
   portionGrams: number;
-  calories: number;
-  protein: number;
-  carbs: number;
-  addedSugar: number | null;
+  nutrients: NutrientValues;
   foodId: number | null;
   customFoodId: number | null;
   recipeId: number | null;

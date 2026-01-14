@@ -17,7 +17,7 @@ foodsRouter.get('/search', validateQuery(foodSearchQuerySchema), (req, res) => {
  * GET /foods/:fdcId - Get food details with portions
  */
 foodsRouter.get('/:fdcId', validateParams(fdcIdParamSchema), (req, res) => {
-  const fdcId = parseInt(req.params.fdcId, 10);
+  const fdcId = parseInt(req.params.fdcId as string, 10);
   const food = foodService.getById(fdcId);
   res.json(food);
 });

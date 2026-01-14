@@ -15,6 +15,8 @@
     "typecheck": "tsc --noEmit",
     "db:init": "tsx src/db/init.ts",
     "db:reset": "tsx src/db/init.ts --reset",
+    "db:migrate": "tsx src/db/migrate.ts run",
+    "db:migrate:list": "tsx src/db/migrate.ts list",
     "db:verify": "tsx src/db/verify.ts",
     "usda:download": "tsx scripts/download-usda.ts",
     "usda:import": "tsx scripts/import-usda.ts",

@@ -5,44 +5,71 @@ import {
   calculateNutrientsForCustomFood,
   calculateNutrientsForRecipe,
 } from '../utils/nutrient-calc.js';
-import type { FoodLogEntry, RecentFood } from '@muffintop/shared/types';
+import {
+  NUTRIENT_REGISTRY,
+  ALL_NUTRIENT_KEYS,
+  getNutrientColumnsSql,
+  getNutrientDbColumns,
+  createEmptyNutrientValues,
+  type FoodLogEntry,
+  type RecentFood,
+  type NutrientValues,
+} from '@muffintop/shared/types';
 import type { CreateFoodLogInput, UpdateFoodLogInput, FoodLogQuery } from '../models/food-log.js';
 
-interface FoodLogRow {
-  id: number;
-  user_id: number;
-  food_id: number | null;
-  custom_food_id: number | null;
-  recipe_id: number | null;
-  log_date: string;
-  meal_category: string;
-  portion_amount: number;
-  portion_grams: number;
-  calories: number;
-  protein: number;
-  carbs: number;
-  added_sugar: number | null;
-  created_at: string;
-  food_name?: string;
+// Pre-compute nutrient column names
+const NUTRIENT_COLUMNS_SQL = getNutrientColumnsSql();
+const NUTRIENT_DB_COLUMNS = getNutrientDbColumns();
+
+function rowToNutrients(row: Record<string, unknown>): NutrientValues {
+  const nutrients = createEmptyNutrientValues();
+
+  for (const key of ALL_NUTRIENT_KEYS) {
+    const dbColumn = NUTRIENT_REGISTRY[key].dbColumn;
+    const value = row[dbColumn];
+    nutrients[key] = typeof value === 'number' ? value : null;
+  }
+
+  return nutrients;
 }
 
-function rowToFoodLogEntry(row: FoodLogRow): FoodLogEntry {
+function rowToFoodLogEntry(row: Record<string, unknown>): FoodLogEntry {
   return {
-    id: row.id,
-    logDate: row.log_date,
+    id: row.id as number,
+    logDate: row.log_date as string,
     mealCategory: row.meal_category as FoodLogEntry['mealCategory'],
-    foodName: row.food_name || 'Unknown',
-    portionAmount: row.portion_amount,
-    portionGrams: row.portion_grams,
-    calories: row.calories,
-    protein: row.protein,
-    carbs: row.carbs,
-    addedSugar: row.added_sugar,
-    foodId: row.food_id,
-    customFoodId: row.custom_food_id,
-    recipeId: row.recipe_id,
-    createdAt: row.created_at,
+    foodName: (row.food_name as string) || 'Unknown',
+    portionAmount: row.portion_amount as number,
+    portionGrams: row.portion_grams as number,
+    nutrients: rowToNutrients(row),
+    foodId: row.food_id as number | null,
+    customFoodId: row.custom_food_id as number | null,
+    recipeId: row.recipe_id as number | null,
+    createdAt: row.created_at as string,
   };
+}
+
+/**
+ * Build the INSERT column list and placeholders for nutrients
+ */
+function buildNutrientInsertSql(): { columns: string; placeholders: string } {
+  const columns = NUTRIENT_DB_COLUMNS.join(', ');
+  const placeholders = NUTRIENT_DB_COLUMNS.map(() => '?').join(', ');
+  return { columns, placeholders };
+}
+
+/**
+ * Extract nutrient values as array for INSERT statement
+ */
+function nutrientsToParams(nutrients: NutrientValues): (number | null)[] {
+  return ALL_NUTRIENT_KEYS.map((key) => nutrients[key]);
+}
+
+/**
+ * Build the UPDATE SET clause for nutrients
+ */
+function buildNutrientUpdateSql(): string {
+  return NUTRIENT_DB_COLUMNS.map((col) => `${col} = ?`).join(', ');
 }
 
 export const foodLogService = {
@@ -50,8 +77,10 @@ export const foodLogService = {
     const db = getDb();
 
     let sql = `
-      SELECT fl.*,
-        COALESCE(f.description, cf.name, r.name) as food_name
+      SELECT fl.id, fl.user_id, fl.food_id, fl.custom_food_id, fl.recipe_id,
+             fl.log_date, fl.meal_category, fl.portion_amount, fl.portion_grams,
+             fl.created_at, ${NUTRIENT_COLUMNS_SQL},
+             COALESCE(f.description, cf.name, r.name) as food_name
       FROM food_log fl
       LEFT JOIN food f ON fl.food_id = f.fdc_id
       LEFT JOIN custom_food cf ON fl.custom_food_id = cf.id
@@ -70,7 +99,7 @@ export const foodLogService = {
 
     sql += ' ORDER BY fl.log_date DESC, fl.created_at DESC';
 
-    const rows = db.prepare(sql).all(...params) as FoodLogRow[];
+    const rows = db.prepare(sql).all(...params) as Record<string, unknown>[];
     return rows.map(rowToFoodLogEntry);
   },
 
@@ -79,15 +108,17 @@ export const foodLogService = {
 
     const row = db
       .prepare(
-        `SELECT fl.*,
-           COALESCE(f.description, cf.name, r.name) as food_name
+        `SELECT fl.id, fl.user_id, fl.food_id, fl.custom_food_id, fl.recipe_id,
+                fl.log_date, fl.meal_category, fl.portion_amount, fl.portion_grams,
+                fl.created_at, ${NUTRIENT_COLUMNS_SQL},
+                COALESCE(f.description, cf.name, r.name) as food_name
          FROM food_log fl
          LEFT JOIN food f ON fl.food_id = f.fdc_id
          LEFT JOIN custom_food cf ON fl.custom_food_id = cf.id
          LEFT JOIN recipe r ON fl.recipe_id = r.id
          WHERE fl.id = ? AND fl.user_id = ?`
       )
-      .get(entryId, userId) as FoodLogRow | undefined;
+      .get(entryId, userId) as Record<string, unknown> | undefined;
 
     if (!row) {
       throw new NotFoundError('Food log entry', entryId);
@@ -100,28 +131,30 @@ export const foodLogService = {
     const db = getDb();
 
     // Calculate nutrients based on food source
-    let nutrients: { calories: number; protein: number; carbs: number; addedSugar: number | null };
+    let nutrients: NutrientValues;
 
     if (input.foodId) {
       const result = calculateNutrientsForFood(input.foodId, input.portionGrams);
-      nutrients = result;
+      nutrients = result.nutrients;
     } else if (input.customFoodId) {
       const result = calculateNutrientsForCustomFood(input.customFoodId, input.portionGrams, userId);
-      nutrients = result;
+      nutrients = result.nutrients;
     } else if (input.recipeId) {
       const result = calculateNutrientsForRecipe(input.recipeId, input.portionGrams, userId);
-      nutrients = result;
+      nutrients = result.nutrients;
     } else {
       throw new ValidationError('One of foodId, customFoodId, or recipeId is required');
     }
+
+    const { columns: nutrientColumns, placeholders: nutrientPlaceholders } = buildNutrientInsertSql();
 
     const result = db
       .prepare(
         `INSERT INTO food_log (
           user_id, food_id, custom_food_id, recipe_id,
           log_date, meal_category, portion_amount, portion_grams,
-          calories, protein, carbs, added_sugar
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          ${nutrientColumns}
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ${nutrientPlaceholders})`
       )
       .run(
         userId,
@@ -132,10 +165,7 @@ export const foodLogService = {
         input.mealCategory,
         input.portionAmount,
         input.portionGrams,
-        nutrients.calories,
-        nutrients.protein,
-        nutrients.carbs,
-        nutrients.addedSugar
+        ...nutrientsToParams(nutrients)
       );
 
     return this.getById(userId, Number(result.lastInsertRowid));
@@ -148,25 +178,22 @@ export const foodLogService = {
     const existing = this.getById(userId, entryId);
 
     // If portion changed, recalculate nutrients
-    let nutrients = {
-      calories: existing.calories,
-      protein: existing.protein,
-      carbs: existing.carbs,
-      addedSugar: existing.addedSugar,
-    };
+    let nutrients = existing.nutrients;
 
     if (input.portionGrams && input.portionGrams !== existing.portionGrams) {
       if (existing.foodId) {
         const result = calculateNutrientsForFood(existing.foodId, input.portionGrams);
-        nutrients = result;
+        nutrients = result.nutrients;
       } else if (existing.customFoodId) {
         const result = calculateNutrientsForCustomFood(existing.customFoodId, input.portionGrams, userId);
-        nutrients = result;
+        nutrients = result.nutrients;
       } else if (existing.recipeId) {
         const result = calculateNutrientsForRecipe(existing.recipeId, input.portionGrams, userId);
-        nutrients = result;
+        nutrients = result.nutrients;
       }
     }
+
+    const nutrientUpdateSql = buildNutrientUpdateSql();
 
     db.prepare(
       `UPDATE food_log SET
@@ -174,20 +201,14 @@ export const foodLogService = {
         meal_category = COALESCE(?, meal_category),
         portion_amount = COALESCE(?, portion_amount),
         portion_grams = COALESCE(?, portion_grams),
-        calories = ?,
-        protein = ?,
-        carbs = ?,
-        added_sugar = ?
+        ${nutrientUpdateSql}
        WHERE id = ? AND user_id = ?`
     ).run(
       input.logDate || null,
       input.mealCategory || null,
       input.portionAmount || null,
       input.portionGrams || null,
-      nutrients.calories,
-      nutrients.protein,
-      nutrients.carbs,
-      nutrients.addedSugar,
+      ...nutrientsToParams(nutrients),
       entryId,
       userId
     );

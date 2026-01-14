@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useFoodDetail } from '../hooks/useFoodSearch';
-import type { FoodPortion } from '@muffintop/shared/types';
+import { useNutrients } from '../providers/NutrientProvider';
+import type { FoodPortion, NutrientValues } from '@muffintop/shared/types';
 
 interface FoodDetailProps {
   fdcId: number;
@@ -9,6 +10,7 @@ interface FoodDetailProps {
 }
 
 export function FoodDetail({ fdcId, onLog, onClose }: FoodDetailProps) {
+  const { visibleNutrients, getNutrientDef } = useNutrients();
   const { data: food, isLoading, error } = useFoodDetail(fdcId);
   const [selectedPortion, setSelectedPortion] = useState<FoodPortion | null>(null);
   const [customGrams, setCustomGrams] = useState<string>('');
@@ -19,14 +21,14 @@ export function FoodDetail({ fdcId, onLog, onClose }: FoodDetailProps) {
 
   const formatNumber = (val: number | null) => (val !== null ? val.toFixed(1) : '—');
 
-  const calculateNutrients = (grams: number) => {
+  const calculateNutrients = (grams: number): Partial<NutrientValues> => {
     const factor = grams / 100;
-    return {
-      calories: food.calories !== null ? food.calories * factor : null,
-      protein: food.protein !== null ? food.protein * factor : null,
-      carbs: food.carbs !== null ? food.carbs * factor : null,
-      addedSugar: food.addedSugar !== null ? food.addedSugar * factor : null,
-    };
+    const result: Partial<NutrientValues> = {};
+    for (const key of visibleNutrients) {
+      const base = food.nutrients[key];
+      result[key] = base !== null ? base * factor : null;
+    }
+    return result;
   };
 
   const portionGrams = selectedPortion
@@ -56,10 +58,15 @@ export function FoodDetail({ fdcId, onLog, onClose }: FoodDetailProps) {
       <div className="base-nutrients">
         <h4>Per 100g:</h4>
         <div className="nutrients-grid">
-          <span>Calories: {formatNumber(food.calories)} kcal</span>
-          <span>Protein: {formatNumber(food.protein)}g</span>
-          <span>Carbs: {formatNumber(food.carbs)}g</span>
-          <span>Added Sugar: {formatNumber(food.addedSugar)}g</span>
+          {visibleNutrients.map((key) => {
+            const def = getNutrientDef(key);
+            return (
+              <span key={key}>
+                {def.displayName}: {formatNumber(food.nutrients[key])}
+                {def.unit}
+              </span>
+            );
+          })}
         </div>
       </div>
 
@@ -126,10 +133,15 @@ export function FoodDetail({ fdcId, onLog, onClose }: FoodDetailProps) {
         <div className="calculated-nutrients">
           <h4>For {portionGrams.toFixed(0)}g:</h4>
           <div className="nutrients-grid highlight">
-            <span>Calories: {formatNumber(calculated.calories)} kcal</span>
-            <span>Protein: {formatNumber(calculated.protein)}g</span>
-            <span>Carbs: {formatNumber(calculated.carbs)}g</span>
-            <span>Added Sugar: {formatNumber(calculated.addedSugar)}g</span>
+            {visibleNutrients.map((key) => {
+              const def = getNutrientDef(key);
+              return (
+                <span key={key}>
+                  {def.displayName}: {formatNumber(calculated[key] ?? null)}
+                  {def.unit}
+                </span>
+              );
+            })}
           </div>
         </div>
       )}

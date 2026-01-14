@@ -11,7 +11,7 @@ export function validate<T>(schema: ZodSchema<T>, part: RequestPart = 'body') {
     try {
       const data = schema.parse(req[part]);
       // Replace with validated data (handles coercion)
-      (req as Record<string, unknown>)[part] = data;
+      (req as unknown as Record<string, unknown>)[part] = data;
       next();
     } catch (error) {
       if (error instanceof ZodError) {

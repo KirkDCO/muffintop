@@ -2,26 +2,28 @@
  * API response types
  */
 
+import type { NutrientValues } from './nutrients.js';
+
 export interface ApiError {
   code: string;
   message: string;
   details?: Record<string, unknown>;
 }
 
-export interface ValidationError extends ApiError {
+export interface ValidationErrorDetail {
+  field: string;
+  message: string;
+}
+
+export interface ValidationError {
   code: 'VALIDATION_ERROR';
-  details: {
-    field: string;
-    message: string;
-  }[];
+  message: string;
+  details: ValidationErrorDetail[];
 }
 
 // Stats types
 export interface DailyIntake {
-  calories: number;
-  protein: number;
-  carbs: number;
-  addedSugar: number | null;
+  nutrients: NutrientValues;
 }
 
 export interface DailyExpenditure {
@@ -55,10 +57,7 @@ export interface DailySummary {
 
 export interface TrendDataPoint {
   date: string;
-  calories: number | null;
-  protein: number | null;
-  carbs: number | null;
-  sugar: number | null;
+  nutrients: NutrientValues;
   weight: number | null;
   expenditure: number | null;
 }

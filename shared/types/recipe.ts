@@ -2,6 +2,9 @@
  * Recipe and RecipeIngredient entity types
  */
 
+import type { NutrientValues } from './nutrients.js';
+import type { FoodSummary } from './food.js';
+
 export interface RecipeIngredient {
   id: number;
   foodId: number | null;
@@ -24,10 +27,7 @@ export interface Recipe {
   id: number;
   name: string;
   servings: number;
-  calories: number;
-  protein: number;
-  carbs: number;
-  addedSugar: number | null;
+  nutrients: NutrientValues;
   ingredients: RecipeIngredient[];
   tblspRecipeId: number | null;
   createdAt: string;
@@ -60,7 +60,7 @@ export interface TblspIngredientPreview {
   originalText: string;
   parsedName: string;
   parsedQuantity: string;
-  suggestedFoods: import('./food.js').FoodSummary[];
+  suggestedFoods: FoodSummary[];
 }
 
 export interface TblspRecipePreview {

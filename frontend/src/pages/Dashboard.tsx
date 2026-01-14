@@ -15,7 +15,7 @@ export function Dashboard() {
   const { currentUser } = useUser();
   const [selectedDate, setSelectedDate] = useState(getToday());
   const [showLogModal, setShowLogModal] = useState(false);
-  const [selectedMeal, setSelectedMeal] = useState<MealCategory>('lunch');
+  const [selectedMeal, _setSelectedMeal] = useState<MealCategory>('lunch');
 
   const { data: foodLogData, isLoading: loadingLog } = useFoodLog(selectedDate);
   const { data: recentData } = useRecentFoods();

@@ -105,10 +105,12 @@ describe('Foods API', () => {
         fdcId: 123456,
         description: 'Chicken breast, grilled',
         dataType: 'foundation',
-        calories: 165,
-        protein: 31,
-        carbs: 0,
-        addedSugar: 0,
+        nutrients: {
+          calories: 165,
+          protein: 31,
+          carbs: 0,
+          addedSugar: 0,
+        },
       });
       expect(response.body.portions).toHaveLength(2);
       expect(response.body.portions[0]).toMatchObject({

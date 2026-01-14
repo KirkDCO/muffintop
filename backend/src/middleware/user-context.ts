@@ -16,10 +16,11 @@ declare global {
  * Ensures the user exists before proceeding.
  */
 export function requireUser(req: Request, _res: Response, next: NextFunction): void {
-  const userId = parseInt(req.params.userId, 10);
+  const userIdParam = req.params.userId as string;
+  const userId = parseInt(userIdParam, 10);
 
   if (isNaN(userId)) {
-    next(new NotFoundError('User', req.params.userId));
+    next(new NotFoundError('User', userIdParam));
     return;
   }
 

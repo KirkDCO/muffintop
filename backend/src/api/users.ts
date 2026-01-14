@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { userService } from '../services/user-service.js';
 import { validateBody } from '../middleware/validate.js';
-import { createUserSchema } from '../models/user.js';
+import { createUserSchema, updateNutrientPreferencesSchema } from '../models/user.js';
 
 export const usersRouter = Router();
 
@@ -22,11 +22,11 @@ usersRouter.post('/', validateBody(createUserSchema), (req, res) => {
 });
 
 /**
- * GET /users/:userId - Get user details
+ * GET /users/:userId - Get user details with preferences
  */
 usersRouter.get('/:userId', (req, res) => {
-  const userId = parseInt(req.params.userId, 10);
-  const user = userService.getById(userId);
+  const userId = parseInt(req.params.userId as string, 10);
+  const user = userService.getWithPreferences(userId);
   res.json(user);
 });
 
@@ -34,7 +34,29 @@ usersRouter.get('/:userId', (req, res) => {
  * DELETE /users/:userId - Delete user and all data
  */
 usersRouter.delete('/:userId', (req, res) => {
-  const userId = parseInt(req.params.userId, 10);
+  const userId = parseInt(req.params.userId as string, 10);
   userService.delete(userId);
   res.status(204).send();
 });
+
+/**
+ * GET /users/:userId/preferences - Get user's nutrient display preferences
+ */
+usersRouter.get('/:userId/preferences', (req, res) => {
+  const userId = parseInt(req.params.userId as string, 10);
+  const preferences = userService.getFullPreferences(userId);
+  res.json(preferences);
+});
+
+/**
+ * PUT /users/:userId/preferences - Update user's nutrient display preferences
+ */
+usersRouter.put(
+  '/:userId/preferences',
+  validateBody(updateNutrientPreferencesSchema),
+  (req, res) => {
+    const userId = parseInt(req.params.userId as string, 10);
+    const preferences = userService.setPreferences(userId, req.body.visibleNutrients);
+    res.json(preferences);
+  }
+);

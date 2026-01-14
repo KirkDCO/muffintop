@@ -1,4 +1,5 @@
 import { getDb, closeDb } from './connection.js';
+import { runMigrations } from './migrate.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -13,6 +14,8 @@ export function initializeDatabase(reset = false): void {
     console.log('Resetting database...');
     // Drop all tables in reverse dependency order
     db.exec(`
+      DROP TABLE IF EXISTS _migrations;
+      DROP TABLE IF EXISTS user_nutrient_preferences;
       DROP TABLE IF EXISTS body_metric;
       DROP TABLE IF EXISTS activity_log;
       DROP TABLE IF EXISTS daily_target;
@@ -35,6 +38,10 @@ export function initializeDatabase(reset = false): void {
   db.exec(schema);
   console.log('Database schema initialized successfully.');
 
+  // Run any pending migrations
+  console.log('Checking for pending migrations...');
+  runMigrations();
+
   // Seed sample data for testing
   seedSampleData(db);
 }
@@ -49,43 +56,51 @@ function seedSampleData(db: ReturnType<typeof getDb>): void {
 
   console.log('Seeding sample food data...');
 
-  // Insert sample foods (per 100g values)
+  // Insert sample foods (per 100g values) with all nutrients
+  // Format: [fdc_id, description, data_type, brand_owner,
+  //          calories, protein, carbs, fiber, added_sugar, total_sugar,
+  //          total_fat, saturated_fat, trans_fat, cholesterol, sodium, potassium,
+  //          calcium, iron, vitamin_a, vitamin_c, vitamin_d]
   const insertFood = db.prepare(`
-    INSERT INTO food (fdc_id, description, data_type, brand_owner, calories, protein, carbs, added_sugar)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO food (
+      fdc_id, description, data_type, brand_owner,
+      calories, protein, carbs, fiber, added_sugar, total_sugar,
+      total_fat, saturated_fat, trans_fat, cholesterol, sodium, potassium,
+      calcium, iron, vitamin_a, vitamin_c, vitamin_d
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const sampleFoods = [
-    // Fruits
-    [170567, 'Banana, raw', 'foundation', null, 89, 1.1, 23, 0],
-    [171688, 'Apple, raw, with skin', 'foundation', null, 52, 0.3, 14, 0],
-    [167762, 'Orange, raw', 'foundation', null, 47, 0.9, 12, 0],
-    [171711, 'Strawberries, raw', 'foundation', null, 32, 0.7, 8, 0],
+    // Fruits [fdc_id, desc, type, brand, cal, pro, carb, fib, addSug, totSug, totFat, satFat, transFat, chol, sodium, potass, calc, iron, vitA, vitC, vitD]
+    [170567, 'Banana, raw', 'foundation', null, 89, 1.1, 23, 2.6, 0, 12.2, 0.3, 0.1, 0, 0, 1, 358, 5, 0.3, 3, 8.7, 0],
+    [171688, 'Apple, raw, with skin', 'foundation', null, 52, 0.3, 14, 2.4, 0, 10.4, 0.2, 0, 0, 0, 1, 107, 6, 0.1, 3, 4.6, 0],
+    [167762, 'Orange, raw', 'foundation', null, 47, 0.9, 12, 2.4, 0, 9.4, 0.1, 0, 0, 0, 0, 181, 40, 0.1, 11, 53.2, 0],
+    [171711, 'Strawberries, raw', 'foundation', null, 32, 0.7, 8, 2.0, 0, 4.9, 0.3, 0, 0, 0, 1, 153, 16, 0.4, 1, 58.8, 0],
     // Proteins
-    [171534, 'Chicken breast, grilled, skinless', 'foundation', null, 165, 31, 0, 0],
-    [175167, 'Beef, ground, 90% lean, cooked', 'foundation', null, 176, 26, 0, 0],
-    [175139, 'Salmon, Atlantic, cooked', 'foundation', null, 208, 20, 0, 0],
-    [173423, 'Eggs, whole, scrambled', 'foundation', null, 149, 10, 2, 0],
-    [174288, 'Tofu, firm', 'foundation', null, 144, 17, 3, 0],
+    [171534, 'Chicken breast, grilled, skinless', 'foundation', null, 165, 31, 0, 0, 0, 0, 3.6, 1.0, 0, 85, 74, 256, 15, 1.0, 6, 0, 0],
+    [175167, 'Beef, ground, 90% lean, cooked', 'foundation', null, 176, 26, 0, 0, 0, 0, 10, 4.0, 0.5, 78, 66, 318, 18, 2.5, 0, 0, 0],
+    [175139, 'Salmon, Atlantic, cooked', 'foundation', null, 208, 20, 0, 0, 0, 0, 13, 3.0, 0, 55, 59, 363, 12, 0.3, 40, 0, 11],
+    [173423, 'Eggs, whole, scrambled', 'foundation', null, 149, 10, 2, 0, 0, 1.4, 11, 3.3, 0, 352, 145, 138, 50, 1.5, 160, 0, 1.1],
+    [174288, 'Tofu, firm', 'foundation', null, 144, 17, 3, 0.9, 0, 0.6, 9, 1.3, 0, 0, 14, 237, 683, 2.7, 0, 0.2, 0],
     // Grains
-    [168880, 'Rice, white, cooked', 'sr_legacy', null, 130, 2.7, 28, 0],
-    [168873, 'Rice, brown, cooked', 'sr_legacy', null, 112, 2.3, 24, 0],
-    [168936, 'Bread, whole wheat', 'sr_legacy', null, 247, 13, 41, 4],
-    [169761, 'Pasta, cooked', 'sr_legacy', null, 131, 5, 25, 0],
-    [169705, 'Oatmeal, cooked', 'sr_legacy', null, 68, 2.4, 12, 0],
+    [168880, 'Rice, white, cooked', 'sr_legacy', null, 130, 2.7, 28, 0.4, 0, 0, 0.3, 0.1, 0, 0, 1, 35, 10, 1.2, 0, 0, 0],
+    [168873, 'Rice, brown, cooked', 'sr_legacy', null, 112, 2.3, 24, 1.8, 0, 0, 0.9, 0.2, 0, 0, 5, 43, 10, 0.4, 0, 0, 0],
+    [168936, 'Bread, whole wheat', 'sr_legacy', null, 247, 13, 41, 6.0, 4, 5.6, 3.4, 0.7, 0, 0, 400, 250, 107, 2.5, 0, 0, 0],
+    [169761, 'Pasta, cooked', 'sr_legacy', null, 131, 5, 25, 1.8, 0, 0.6, 1.1, 0.2, 0, 0, 1, 44, 7, 1.3, 0, 0, 0],
+    [169705, 'Oatmeal, cooked', 'sr_legacy', null, 68, 2.4, 12, 1.7, 0, 0.3, 1.4, 0.2, 0, 0, 49, 61, 9, 1.4, 0, 0, 0],
     // Vegetables
-    [170406, 'Broccoli, cooked', 'foundation', null, 35, 2.4, 7, 0],
-    [169986, 'Spinach, raw', 'foundation', null, 23, 2.9, 4, 0],
-    [170476, 'Carrots, raw', 'foundation', null, 41, 0.9, 10, 0],
-    [168483, 'Potato, baked, with skin', 'foundation', null, 93, 2.5, 21, 0],
-    [169228, 'Sweet potato, baked', 'foundation', null, 90, 2, 21, 0],
+    [170406, 'Broccoli, cooked', 'foundation', null, 35, 2.4, 7, 3.3, 0, 1.4, 0.4, 0.1, 0, 0, 41, 293, 40, 0.7, 77, 64.9, 0],
+    [169986, 'Spinach, raw', 'foundation', null, 23, 2.9, 4, 2.2, 0, 0.4, 0.4, 0.1, 0, 0, 79, 558, 99, 2.7, 469, 28.1, 0],
+    [170476, 'Carrots, raw', 'foundation', null, 41, 0.9, 10, 2.8, 0, 4.7, 0.2, 0, 0, 0, 69, 320, 33, 0.3, 835, 5.9, 0],
+    [168483, 'Potato, baked, with skin', 'foundation', null, 93, 2.5, 21, 2.2, 0, 1.0, 0.1, 0, 0, 0, 10, 535, 15, 1.1, 1, 9.6, 0],
+    [169228, 'Sweet potato, baked', 'foundation', null, 90, 2, 21, 3.3, 0, 6.5, 0.1, 0, 0, 0, 36, 475, 38, 0.7, 961, 19.6, 0],
     // Dairy
-    [171265, 'Milk, 2% fat', 'sr_legacy', null, 50, 3.3, 5, 0],
-    [170903, 'Greek yogurt, plain, nonfat', 'sr_legacy', null, 59, 10, 4, 0],
-    [173414, 'Cheese, cheddar', 'sr_legacy', null, 403, 23, 3, 0],
+    [171265, 'Milk, 2% fat', 'sr_legacy', null, 50, 3.3, 5, 0, 0, 5.1, 2.0, 1.2, 0, 8, 41, 150, 120, 0, 47, 0.2, 1.3],
+    [170903, 'Greek yogurt, plain, nonfat', 'sr_legacy', null, 59, 10, 4, 0, 0, 3.2, 0.4, 0.1, 0, 5, 47, 141, 110, 0.1, 0, 0, 0],
+    [173414, 'Cheese, cheddar', 'sr_legacy', null, 403, 23, 3, 0, 0, 0.5, 33, 19, 1, 99, 653, 76, 710, 0.1, 265, 0, 0.6],
     // Branded examples
-    [2047563, 'KIND Bar, Dark Chocolate Nuts', 'branded', 'KIND', 210, 6, 17, 5],
-    [2003586, 'Chobani Greek Yogurt, Vanilla', 'branded', 'Chobani', 120, 12, 15, 11],
+    [2047563, 'KIND Bar, Dark Chocolate Nuts', 'branded', 'KIND', 210, 6, 17, 3, 5, 8, 16, 3.5, 0, 0, 15, 200, 40, 1.4, 0, 0, 0],
+    [2003586, 'Chobani Greek Yogurt, Vanilla', 'branded', 'Chobani', 120, 12, 15, 0, 11, 12, 0, 0, 0, 5, 55, 180, 150, 0, 0, 0, 0],
   ];
 
   for (const food of sampleFoods) {

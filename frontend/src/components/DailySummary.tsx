@@ -1,4 +1,5 @@
 import type { FoodLogEntry } from '@muffintop/shared/types';
+import { useNutrients } from '../providers/NutrientProvider';
 
 interface DailySummaryProps {
   entries: FoodLogEntry[];
@@ -6,14 +7,17 @@ interface DailySummaryProps {
 }
 
 export function DailySummary({ entries, date }: DailySummaryProps) {
+  const { visibleNutrients, getNutrientDef } = useNutrients();
+
+  // Sum all nutrients
   const totals = entries.reduce(
-    (acc, entry) => ({
-      calories: acc.calories + entry.calories,
-      protein: acc.protein + entry.protein,
-      carbs: acc.carbs + entry.carbs,
-      addedSugar: acc.addedSugar + (entry.addedSugar || 0),
-    }),
-    { calories: 0, protein: 0, carbs: 0, addedSugar: 0 }
+    (acc, entry) => {
+      for (const key of visibleNutrients) {
+        acc[key] = (acc[key] || 0) + (entry.nutrients[key] || 0);
+      }
+      return acc;
+    },
+    {} as Record<string, number>
   );
 
   const formatDate = (dateStr: string) => {
@@ -29,22 +33,21 @@ export function DailySummary({ entries, date }: DailySummaryProps) {
     <div className="daily-summary">
       <h3>{formatDate(date)}</h3>
       <div className="summary-stats">
-        <div className="stat">
-          <span className="stat-value">{totals.calories.toFixed(0)}</span>
-          <span className="stat-label">kcal</span>
-        </div>
-        <div className="stat">
-          <span className="stat-value">{totals.protein.toFixed(0)}g</span>
-          <span className="stat-label">protein</span>
-        </div>
-        <div className="stat">
-          <span className="stat-value">{totals.carbs.toFixed(0)}g</span>
-          <span className="stat-label">carbs</span>
-        </div>
-        <div className="stat">
-          <span className="stat-value">{totals.addedSugar.toFixed(0)}g</span>
-          <span className="stat-label">sugar</span>
-        </div>
+        {visibleNutrients.map((key) => {
+          const def = getNutrientDef(key);
+          const value = totals[key] || 0;
+          return (
+            <div key={key} className="stat">
+              <span className="stat-value">
+                {value.toFixed(0)}
+                {def.unit !== 'kcal' ? def.unit : ''}
+              </span>
+              <span className="stat-label">
+                {def.unit === 'kcal' ? 'kcal' : def.shortName}
+              </span>
+            </div>
+          );
+        })}
       </div>
       <p className="entry-count">{entries.length} items logged</p>
 

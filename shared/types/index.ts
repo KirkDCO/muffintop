@@ -3,6 +3,7 @@
  * Central export for all shared TypeScript interfaces
  */
 
+export * from './nutrients.js';
 export * from './user.js';
 export * from './food.js';
 export * from './food-log.js';

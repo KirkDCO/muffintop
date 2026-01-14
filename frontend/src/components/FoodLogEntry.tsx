@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FoodLogEntry as FoodLogEntryType } from '@muffintop/shared/types';
+import { useNutrients } from '../providers/NutrientProvider';
 
 interface FoodLogEntryProps {
   entry: FoodLogEntryType;
@@ -8,6 +9,7 @@ interface FoodLogEntryProps {
 }
 
 export function FoodLogEntry({ entry, onEdit, onDelete }: FoodLogEntryProps) {
+  const { visibleNutrients, getNutrientDef } = useNutrients();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const formatNumber = (val: number | null) => (val !== null ? val.toFixed(0) : '—');
@@ -29,10 +31,15 @@ export function FoodLogEntry({ entry, onEdit, onDelete }: FoodLogEntryProps) {
         <span className="portion">{entry.portionGrams.toFixed(0)}g</span>
       </div>
       <div className="entry-nutrients">
-        <span>{formatNumber(entry.calories)} kcal</span>
-        <span>{formatNumber(entry.protein)}g P</span>
-        <span>{formatNumber(entry.carbs)}g C</span>
-        <span>{formatNumber(entry.addedSugar)}g S</span>
+        {visibleNutrients.map((key) => {
+          const def = getNutrientDef(key);
+          return (
+            <span key={key}>
+              {formatNumber(entry.nutrients[key])}
+              {def.unit === 'kcal' ? ' kcal' : `${def.unit} ${def.shortName}`}
+            </span>
+          );
+        })}
       </div>
       <div className="entry-actions">
         {onEdit && (

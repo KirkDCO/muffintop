@@ -4,6 +4,7 @@ import { Layout } from './components/Layout';
 import { SelectUser } from './pages/SelectUser';
 import { Foods } from './pages/Foods';
 import { Dashboard } from './pages/Dashboard';
+import { Settings } from './pages/Settings';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { currentUser, isLoading } = useUser();
@@ -35,7 +36,7 @@ function App() {
         <Route path="foods" element={<Foods />} />
         <Route path="recipes" element={<div>Recipes page coming soon...</div>} />
         <Route path="trends" element={<div>Trends page coming soon...</div>} />
-        <Route path="settings" element={<div>Settings page coming soon...</div>} />
+        <Route path="settings" element={<Settings />} />
       </Route>
     </Routes>
   );

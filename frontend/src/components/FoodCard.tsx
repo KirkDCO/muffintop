@@ -1,4 +1,5 @@
 import type { FoodSummary } from '@muffintop/shared/types';
+import { useNutrients } from '../providers/NutrientProvider';
 
 interface FoodCardProps {
   food: FoodSummary;
@@ -6,6 +7,7 @@ interface FoodCardProps {
 }
 
 export function FoodCard({ food, onClick }: FoodCardProps) {
+  const { visibleNutrients, getNutrientDef } = useNutrients();
   const formatNumber = (val: number | null) => (val !== null ? val.toFixed(1) : '—');
 
   return (
@@ -15,18 +17,15 @@ export function FoodCard({ food, onClick }: FoodCardProps) {
         {food.brandOwner && <span className="brand">{food.brandOwner}</span>}
       </div>
       <div className="food-nutrients">
-        <span className="nutrient">
-          <strong>{formatNumber(food.calories)}</strong> kcal
-        </span>
-        <span className="nutrient">
-          <strong>{formatNumber(food.protein)}</strong>g protein
-        </span>
-        <span className="nutrient">
-          <strong>{formatNumber(food.carbs)}</strong>g carbs
-        </span>
-        <span className="nutrient">
-          <strong>{formatNumber(food.addedSugar)}</strong>g sugar
-        </span>
+        {visibleNutrients.map((key) => {
+          const def = getNutrientDef(key);
+          return (
+            <span key={key} className="nutrient">
+              <strong>{formatNumber(food.nutrients[key])}</strong>
+              {def.unit === 'kcal' ? ' kcal' : `${def.unit} ${def.shortName}`}
+            </span>
+          );
+        })}
       </div>
       <span className="data-type">{food.dataType.replace('_', ' ')}</span>
 

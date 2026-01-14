@@ -1,5 +1,5 @@
 -- MuffinTop Database Schema
--- Version: 1.0.0
+-- Version: 2.0.0
 -- Date: 2026-01-13
 
 -- ============================================
@@ -21,10 +21,24 @@ CREATE TABLE IF NOT EXISTS food (
   description TEXT NOT NULL,
   data_type TEXT NOT NULL CHECK (data_type IN ('foundation', 'sr_legacy', 'branded')),
   brand_owner TEXT,
+  -- Nutrients (per 100g)
   calories REAL,
   protein REAL,
   carbs REAL,
-  added_sugar REAL
+  fiber REAL,
+  added_sugar REAL,
+  total_sugar REAL,
+  total_fat REAL,
+  saturated_fat REAL,
+  trans_fat REAL,
+  cholesterol REAL,
+  sodium REAL,
+  potassium REAL,
+  calcium REAL,
+  iron REAL,
+  vitamin_a REAL,
+  vitamin_c REAL,
+  vitamin_d REAL
 );
 
 -- FTS5 index for food search
@@ -68,10 +82,24 @@ CREATE TABLE IF NOT EXISTS custom_food (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
+  -- Nutrients (per 100g)
   calories REAL NOT NULL,
   protein REAL NOT NULL,
   carbs REAL NOT NULL,
+  fiber REAL NOT NULL DEFAULT 0,
   added_sugar REAL NOT NULL,
+  total_sugar REAL NOT NULL DEFAULT 0,
+  total_fat REAL NOT NULL DEFAULT 0,
+  saturated_fat REAL NOT NULL DEFAULT 0,
+  trans_fat REAL NOT NULL DEFAULT 0,
+  cholesterol REAL NOT NULL DEFAULT 0,
+  sodium REAL NOT NULL DEFAULT 0,
+  potassium REAL NOT NULL DEFAULT 0,
+  calcium REAL NOT NULL DEFAULT 0,
+  iron REAL NOT NULL DEFAULT 0,
+  vitamin_a REAL NOT NULL DEFAULT 0,
+  vitamin_c REAL NOT NULL DEFAULT 0,
+  vitamin_d REAL NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -91,10 +119,24 @@ CREATE TABLE IF NOT EXISTS food_log (
   meal_category TEXT NOT NULL CHECK (meal_category IN ('breakfast', 'lunch', 'dinner', 'snack')),
   portion_amount REAL NOT NULL,
   portion_grams REAL NOT NULL,
+  -- Calculated nutrients for this log entry
   calories REAL NOT NULL,
   protein REAL NOT NULL,
   carbs REAL NOT NULL,
+  fiber REAL,
   added_sugar REAL,
+  total_sugar REAL,
+  total_fat REAL,
+  saturated_fat REAL,
+  trans_fat REAL,
+  cholesterol REAL,
+  sodium REAL,
+  potassium REAL,
+  calcium REAL,
+  iron REAL,
+  vitamin_a REAL,
+  vitamin_c REAL,
+  vitamin_d REAL,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   CHECK (
     (food_id IS NOT NULL AND custom_food_id IS NULL AND recipe_id IS NULL) OR
@@ -115,10 +157,24 @@ CREATE TABLE IF NOT EXISTS recipe (
   user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   servings INTEGER NOT NULL DEFAULT 1 CHECK (servings >= 1),
+  -- Total nutrients for entire recipe
   calories REAL NOT NULL,
   protein REAL NOT NULL,
   carbs REAL NOT NULL,
+  fiber REAL,
   added_sugar REAL,
+  total_sugar REAL,
+  total_fat REAL,
+  saturated_fat REAL,
+  trans_fat REAL,
+  cholesterol REAL,
+  sodium REAL,
+  potassium REAL,
+  calcium REAL,
+  iron REAL,
+  vitamin_a REAL,
+  vitamin_c REAL,
+  vitamin_d REAL,
   tblsp_recipe_id INTEGER,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -183,3 +239,24 @@ CREATE TABLE IF NOT EXISTS body_metric (
 );
 
 CREATE INDEX IF NOT EXISTS idx_body_metric_user_date ON body_metric(user_id, metric_date);
+
+-- ============================================
+-- User Nutrient Preferences
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS user_nutrient_preferences (
+  user_id INTEGER PRIMARY KEY REFERENCES user(id) ON DELETE CASCADE,
+  visible_nutrients TEXT NOT NULL DEFAULT '["calories","protein","carbs","totalFat","saturatedFat","fiber","addedSugar"]',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- ============================================
+-- Migrations Tracking
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS _migrations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  filename TEXT UNIQUE NOT NULL,
+  applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+);

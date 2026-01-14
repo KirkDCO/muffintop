@@ -2,15 +2,14 @@
  * Food and FoodPortion entity types
  */
 
+import type { NutrientValues } from './nutrients.js';
+
 export interface FoodSummary {
   fdcId: number;
   description: string;
   dataType: 'foundation' | 'sr_legacy' | 'branded';
   brandOwner: string | null;
-  calories: number | null;
-  protein: number | null;
-  carbs: number | null;
-  addedSugar: number | null;
+  nutrients: NutrientValues;
 }
 
 export interface FoodPortion {
@@ -27,19 +26,13 @@ export interface FoodDetail extends FoodSummary {
 export interface CustomFood {
   id: number;
   name: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  addedSugar: number;
+  nutrients: NutrientValues;
   createdAt: string;
 }
 
 export interface CreateCustomFoodInput {
   name: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  addedSugar: number;
+  nutrients: NutrientValues;
 }
 
 export interface FoodSearchParams {

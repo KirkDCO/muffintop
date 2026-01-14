@@ -1,18 +1,20 @@
 import { getDb } from '../db/connection.js';
 import { NotFoundError } from '../middleware/error-handler.js';
-import type { FoodSummary, FoodDetail, FoodPortion, FoodSearchResult } from '@muffintop/shared/types';
+import {
+  NUTRIENT_REGISTRY,
+  ALL_NUTRIENT_KEYS,
+  getNutrientColumnsSql,
+  createEmptyNutrientValues,
+  type FoodSummary,
+  type FoodDetail,
+  type FoodPortion,
+  type FoodSearchResult,
+  type NutrientValues,
+} from '@muffintop/shared/types';
 import type { FoodSearchQuery } from '../models/food.js';
 
-interface FoodRow {
-  fdc_id: number;
-  description: string;
-  data_type: string;
-  brand_owner: string | null;
-  calories: number | null;
-  protein: number | null;
-  carbs: number | null;
-  added_sugar: number | null;
-}
+// Pre-compute nutrient columns for SQL
+const NUTRIENT_COLUMNS_SQL = getNutrientColumnsSql();
 
 interface FoodPortionRow {
   id: number;
@@ -21,16 +23,25 @@ interface FoodPortionRow {
   amount: number;
 }
 
-function rowToFoodSummary(row: FoodRow): FoodSummary {
+function rowToNutrients(row: Record<string, unknown>): NutrientValues {
+  const nutrients = createEmptyNutrientValues();
+
+  for (const key of ALL_NUTRIENT_KEYS) {
+    const dbColumn = NUTRIENT_REGISTRY[key].dbColumn;
+    const value = row[dbColumn];
+    nutrients[key] = typeof value === 'number' ? value : null;
+  }
+
+  return nutrients;
+}
+
+function rowToFoodSummary(row: Record<string, unknown>): FoodSummary {
   return {
-    fdcId: row.fdc_id,
-    description: row.description,
+    fdcId: row.fdc_id as number,
+    description: row.description as string,
     dataType: row.data_type as 'foundation' | 'sr_legacy' | 'branded',
-    brandOwner: row.brand_owner,
-    calories: row.calories,
-    protein: row.protein,
-    carbs: row.carbs,
-    addedSugar: row.added_sugar,
+    brandOwner: row.brand_owner as string | null,
+    nutrients: rowToNutrients(row),
   };
 }
 
@@ -50,7 +61,7 @@ export const foodService = {
     // Use FTS5 for search
     let sql = `
       SELECT f.fdc_id, f.description, f.data_type, f.brand_owner,
-             f.calories, f.protein, f.carbs, f.added_sugar
+             ${NUTRIENT_COLUMNS_SQL}
       FROM food f
       JOIN food_fts fts ON f.fdc_id = fts.rowid
       WHERE food_fts MATCH ?
@@ -66,7 +77,7 @@ export const foodService = {
     sql += ' ORDER BY rank LIMIT ?';
     params.push(query.limit);
 
-    const rows = db.prepare(sql).all(...params) as FoodRow[];
+    const rows = db.prepare(sql).all(...params) as Record<string, unknown>[];
 
     // Get total count
     let countSql = `
@@ -96,10 +107,10 @@ export const foodService = {
     const foodRow = db
       .prepare(
         `SELECT fdc_id, description, data_type, brand_owner,
-                calories, protein, carbs, added_sugar
+                ${NUTRIENT_COLUMNS_SQL}
          FROM food WHERE fdc_id = ?`
       )
-      .get(fdcId) as FoodRow | undefined;
+      .get(fdcId) as Record<string, unknown> | undefined;
 
     if (!foodRow) {
       throw new NotFoundError('Food', fdcId);
