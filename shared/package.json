@@ -1,0 +1,14 @@
+{
+  "name": "@feedbag/shared",
+  "version": "0.1.0",
+  "description": "Shared TypeScript types for FeedBag",
+  "type": "module",
+  "main": "types/index.ts",
+  "types": "types/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

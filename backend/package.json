@@ -1,0 +1,49 @@
+{
+  "name": "@feedbag/backend",
+  "version": "0.1.0",
+  "description": "FeedBag calorie tracker backend API",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src tests --ext .ts",
+    "typecheck": "tsc --noEmit",
+    "db:init": "tsx src/db/init.ts",
+    "db:reset": "tsx src/db/init.ts --reset",
+    "db:verify": "tsx src/db/verify.ts",
+    "usda:download": "tsx scripts/download-usda.ts",
+    "usda:import": "tsx scripts/import-usda.ts",
+    "usda:verify": "tsx scripts/verify-usda.ts",
+    "tblsp:verify": "tsx scripts/verify-tblsp.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.5",
+    "@types/supertest": "^6.0.2",
+    "eslint": "^9.18.0",
+    "@eslint/js": "^9.18.0",
+    "typescript-eslint": "^8.20.0",
+    "prettier": "^3.4.2",
+    "supertest": "^7.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8",
+    "@vitest/coverage-v8": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

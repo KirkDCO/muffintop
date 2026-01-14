@@ -25,16 +25,16 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create monorepo structure with backend/, frontend/, shared/, scripts/ directories
-- [ ] T002 Initialize backend Node.js project with TypeScript in backend/package.json
-- [ ] T003 Initialize frontend React/Vite project with TypeScript in frontend/package.json
-- [ ] T004 Initialize shared types package in shared/package.json
-- [ ] T005 [P] Configure ESLint and Prettier for backend in backend/.eslintrc.js
-- [ ] T006 [P] Configure ESLint and Prettier for frontend in frontend/.eslintrc.js
-- [ ] T007 [P] Configure Vitest for backend in backend/vitest.config.ts
-- [ ] T008 [P] Configure Vitest for frontend in frontend/vitest.config.ts
-- [ ] T009 [P] Configure Playwright for E2E tests in frontend/playwright.config.ts
-- [ ] T010 Create environment configuration files (backend/.env.example, frontend/.env.example)
+- [x] T001 Create monorepo structure with backend/, frontend/, shared/, scripts/ directories
+- [x] T002 Initialize backend Node.js project with TypeScript in backend/package.json
+- [x] T003 Initialize frontend React/Vite project with TypeScript in frontend/package.json
+- [x] T004 Initialize shared types package in shared/package.json
+- [x] T005 [P] Configure ESLint and Prettier for backend in backend/eslint.config.js
+- [x] T006 [P] Configure ESLint and Prettier for frontend in frontend/eslint.config.js
+- [x] T007 [P] Configure Vitest for backend in backend/vitest.config.ts
+- [x] T008 [P] Configure Vitest for frontend in frontend/vitest.config.ts
+- [x] T009 [P] Configure Playwright for E2E tests in frontend/playwright.config.ts
+- [x] T010 Create environment configuration files (backend/.env.example, frontend/.env.example)
 
 ---
 
@@ -46,41 +46,41 @@
 
 ### Database & Schema
 
-- [ ] T011 Create FeedBag database schema in backend/db/schema.sql per data-model.md
-- [ ] T012 Implement database connection module in backend/src/db/connection.ts
-- [ ] T013 Create database initialization script in backend/src/db/init.ts
-- [ ] T014 Create USDA data import script in scripts/import-usda.ts
-- [ ] T015 Create npm scripts for db:init, db:reset, usda:import in backend/package.json
+- [x] T011 Create FeedBag database schema in backend/db/schema.sql per data-model.md
+- [x] T012 Implement database connection module in backend/src/db/connection.ts
+- [x] T013 Create database initialization script in backend/src/db/init.ts
+- [x] T014 Create USDA data import script in scripts/import-usda.ts
+- [x] T015 Create npm scripts for db:init, db:reset, usda:import in backend/package.json
 
 ### Shared Types
 
-- [ ] T016 [P] Define User type in shared/types/user.ts
-- [ ] T017 [P] Define Food and FoodPortion types in shared/types/food.ts
-- [ ] T018 [P] Define FoodLog type in shared/types/food-log.ts
-- [ ] T019 [P] Define Recipe and RecipeIngredient types in shared/types/recipe.ts
-- [ ] T020 [P] Define DailyTarget and ActivityLog types in shared/types/targets.ts
-- [ ] T021 [P] Define BodyMetric type in shared/types/metrics.ts
-- [ ] T022 [P] Define API response types (Error, ValidationError) in shared/types/api.ts
-- [ ] T023 Export all types from shared/types/index.ts
+- [x] T016 [P] Define User type in shared/types/user.ts
+- [x] T017 [P] Define Food and FoodPortion types in shared/types/food.ts
+- [x] T018 [P] Define FoodLog type in shared/types/food-log.ts
+- [x] T019 [P] Define Recipe and RecipeIngredient types in shared/types/recipe.ts
+- [x] T020 [P] Define DailyTarget and ActivityLog types in shared/types/targets.ts
+- [x] T021 [P] Define BodyMetric type in shared/types/metrics.ts
+- [x] T022 [P] Define API response types (Error, ValidationError) in shared/types/api.ts
+- [x] T023 Export all types from shared/types/index.ts
 
 ### Backend Infrastructure
 
-- [ ] T024 Setup Express app with middleware in backend/src/app.ts
-- [ ] T025 [P] Create error handling middleware in backend/src/middleware/error-handler.ts
-- [ ] T026 [P] Create user context middleware in backend/src/middleware/user-context.ts
-- [ ] T027 [P] Create request validation middleware using Zod in backend/src/middleware/validate.ts
-- [ ] T028 Configure CORS for LAN access in backend/src/app.ts
-- [ ] T029 Create API router structure in backend/src/api/index.ts
-- [ ] T030 Create server entry point in backend/src/index.ts
+- [x] T024 Setup Express app with middleware in backend/src/app.ts
+- [x] T025 [P] Create error handling middleware in backend/src/middleware/error-handler.ts
+- [x] T026 [P] Create user context middleware in backend/src/middleware/user-context.ts
+- [x] T027 [P] Create request validation middleware using Zod in backend/src/middleware/validate.ts
+- [x] T028 Configure CORS for LAN access in backend/src/app.ts
+- [x] T029 Create API router structure in backend/src/api/index.ts
+- [x] T030 Create server entry point in backend/src/index.ts
 
 ### Frontend Infrastructure
 
-- [ ] T031 Setup React app structure in frontend/src/main.tsx
-- [ ] T032 [P] Create API client service in frontend/src/services/api.ts
-- [ ] T033 [P] Create UserProvider context in frontend/src/providers/UserProvider.tsx
-- [ ] T034 Setup TanStack Query provider in frontend/src/providers/QueryProvider.tsx
-- [ ] T035 Create app routing structure in frontend/src/App.tsx
-- [ ] T036 [P] Create base layout component in frontend/src/components/Layout.tsx
+- [x] T031 Setup React app structure in frontend/src/main.tsx
+- [x] T032 [P] Create API client service in frontend/src/services/api.ts
+- [x] T033 [P] Create UserProvider context in frontend/src/providers/UserProvider.tsx
+- [x] T034 Setup TanStack Query provider in frontend/src/providers/QueryProvider.tsx
+- [x] T035 Create app routing structure in frontend/src/App.tsx
+- [x] T036 [P] Create base layout component in frontend/src/components/Layout.tsx
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -96,18 +96,18 @@
 
 ### Tests for User Story 8
 
-- [ ] T037 [P] [US8] Contract test for GET/POST /users in backend/tests/contract/users.test.ts
-- [ ] T038 [P] [US8] Contract test for DELETE /users/:id in backend/tests/contract/users.test.ts
+- [x] T037 [P] [US8] Contract test for GET/POST /users in backend/tests/contract/users.test.ts
+- [x] T038 [P] [US8] Contract test for DELETE /users/:id in backend/tests/contract/users.test.ts
 
 ### Implementation for User Story 8
 
-- [ ] T039 [P] [US8] Create User model in backend/src/models/user.ts
-- [ ] T040 [US8] Implement UserService (list, create, delete) in backend/src/services/user-service.ts
-- [ ] T041 [US8] Implement /users routes in backend/src/api/users.ts
-- [ ] T042 [US8] Create UserSelector component in frontend/src/components/UserSelector.tsx
-- [ ] T043 [US8] Create user selection page in frontend/src/pages/SelectUser.tsx
-- [ ] T044 [US8] Implement useUsers hook in frontend/src/hooks/useUsers.ts
-- [ ] T045 [US8] Add user deletion with cascade in backend/src/services/user-service.ts
+- [x] T039 [P] [US8] Create User model in backend/src/models/user.ts
+- [x] T040 [US8] Implement UserService (list, create, delete) in backend/src/services/user-service.ts
+- [x] T041 [US8] Implement /users routes in backend/src/api/users.ts
+- [x] T042 [US8] Create UserSelector component in frontend/src/components/UserSelector.tsx
+- [x] T043 [US8] Create user selection page in frontend/src/pages/SelectUser.tsx
+- [x] T044 [US8] Implement useUsers hook in frontend/src/hooks/useUsers.ts
+- [x] T045 [US8] Add user deletion with cascade in backend/src/services/user-service.ts
 
 **Checkpoint**: Users can be created, selected, and deleted. User context flows through app.
 
