@@ -8,7 +8,6 @@ import {
 import {
   NUTRIENT_REGISTRY,
   ALL_NUTRIENT_KEYS,
-  getNutrientColumnsSql,
   getNutrientDbColumns,
   createEmptyNutrientValues,
   type FoodLogEntry,
@@ -18,8 +17,15 @@ import {
 import type { CreateFoodLogInput, UpdateFoodLogInput, FoodLogQuery } from '../models/food-log.js';
 
 // Pre-compute nutrient column names
-const NUTRIENT_COLUMNS_SQL = getNutrientColumnsSql();
 const NUTRIENT_DB_COLUMNS = getNutrientDbColumns();
+
+// Generate nutrient columns with table prefix for SQL queries with joins
+function getNutrientColumnsSqlWithPrefix(prefix: string): string {
+  return NUTRIENT_DB_COLUMNS.map((col) => `${prefix}.${col}`).join(', ');
+}
+
+// For food_log queries (with joins to other tables that have nutrient columns)
+const FL_NUTRIENT_COLUMNS_SQL = getNutrientColumnsSqlWithPrefix('fl');
 
 function rowToNutrients(row: Record<string, unknown>): NutrientValues {
   const nutrients = createEmptyNutrientValues();
@@ -79,7 +85,7 @@ export const foodLogService = {
     let sql = `
       SELECT fl.id, fl.user_id, fl.food_id, fl.custom_food_id, fl.recipe_id,
              fl.log_date, fl.meal_category, fl.portion_amount, fl.portion_grams,
-             fl.created_at, ${NUTRIENT_COLUMNS_SQL},
+             fl.created_at, ${FL_NUTRIENT_COLUMNS_SQL},
              COALESCE(f.description, cf.name, r.name) as food_name
       FROM food_log fl
       LEFT JOIN food f ON fl.food_id = f.fdc_id
@@ -110,7 +116,7 @@ export const foodLogService = {
       .prepare(
         `SELECT fl.id, fl.user_id, fl.food_id, fl.custom_food_id, fl.recipe_id,
                 fl.log_date, fl.meal_category, fl.portion_amount, fl.portion_grams,
-                fl.created_at, ${NUTRIENT_COLUMNS_SQL},
+                fl.created_at, ${FL_NUTRIENT_COLUMNS_SQL},
                 COALESCE(f.description, cf.name, r.name) as food_name
          FROM food_log fl
          LEFT JOIN food f ON fl.food_id = f.fdc_id
