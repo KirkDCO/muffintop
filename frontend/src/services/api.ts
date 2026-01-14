@@ -1,5 +1,5 @@
 /**
- * API Client for FeedBag backend
+ * API Client for MuffinTop backend
  */
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api/v1';

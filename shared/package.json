@@ -1,7 +1,7 @@
 {
-  "name": "@feedbag/shared",
+  "name": "@muffintop/shared",
   "version": "0.1.0",
-  "description": "Shared TypeScript types for FeedBag",
+  "description": "Shared TypeScript types for MuffinTop",
   "type": "module",
   "main": "types/index.ts",
   "types": "types/index.ts",

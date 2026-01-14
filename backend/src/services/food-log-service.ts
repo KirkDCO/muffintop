@@ -5,7 +5,7 @@ import {
   calculateNutrientsForCustomFood,
   calculateNutrientsForRecipe,
 } from '../utils/nutrient-calc.js';
-import type { FoodLogEntry, RecentFood } from '@feedbag/shared/types';
+import type { FoodLogEntry, RecentFood } from '@muffintop/shared/types';
 import type { CreateFoodLogInput, UpdateFoodLogInput, FoodLogQuery } from '../models/food-log.js';
 
 interface FoodLogRow {

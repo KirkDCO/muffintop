@@ -1,5 +1,5 @@
 /**
- * FeedBag Shared Types
+ * MuffinTop Shared Types
  * Central export for all shared TypeScript interfaces
  */
 

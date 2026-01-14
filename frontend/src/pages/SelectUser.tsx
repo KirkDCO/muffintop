@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '../providers/UserProvider';
 import { useUsers, useCreateUser, useDeleteUser } from '../hooks/useUsers';
 import { UserSelector } from '../components/UserSelector';
-import type { User } from '@feedbag/shared/types';
+import type { User } from '@muffintop/shared/types';
 
 export function SelectUser() {
   const navigate = useNavigate();
@@ -54,7 +54,7 @@ export function SelectUser() {
 
   return (
     <div className="select-user-page">
-      <h1>FeedBag</h1>
+      <h1>MuffinTop</h1>
       <h2>Select User</h2>
 
       <UserSelector users={users} onSelect={handleSelectUser} onDelete={handleDeleteUser} />

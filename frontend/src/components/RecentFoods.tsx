@@ -1,4 +1,4 @@
-import type { RecentFood, CreateFoodLogInput, MealCategory } from '@feedbag/shared/types';
+import type { RecentFood, CreateFoodLogInput, MealCategory } from '@muffintop/shared/types';
 
 interface RecentFoodsProps {
   recentFoods: RecentFood[];

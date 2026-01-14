@@ -19,7 +19,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@feedbag/shared': path.resolve(__dirname, '../shared'),
+      '@muffintop/shared': path.resolve(__dirname, '../shared'),
     },
   },
 });

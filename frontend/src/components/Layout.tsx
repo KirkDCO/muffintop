@@ -11,7 +11,7 @@ export function Layout() {
   return (
     <div className="layout">
       <header className="header">
-        <h1>FeedBag</h1>
+        <h1>MuffinTop</h1>
         <nav className="nav">
           <NavLink to="/" end>
             Dashboard

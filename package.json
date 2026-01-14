@@ -1,8 +1,8 @@
 {
-  "name": "feedbag",
+  "name": "muffintop",
   "version": "0.1.0",
   "private": true,
-  "description": "FeedBag - Calorie and nutrient tracking application",
+  "description": "MuffinTop - Calorie and nutrient tracking application",
   "workspaces": [
     "backend",
     "frontend",

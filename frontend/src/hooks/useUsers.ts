@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
-import type { User, CreateUserInput } from '@feedbag/shared/types';
+import type { User, CreateUserInput } from '@muffintop/shared/types';
 
 interface UsersResponse {
   users: User[];

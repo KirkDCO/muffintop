@@ -33,10 +33,10 @@
 
 ### Resolved Clarifications
 
-**FR-012 (tblsp integration)**: Resolved - import-only integration. FeedBag imports
+**FR-012 (tblsp integration)**: Resolved - import-only integration. MuffinTop imports
 recipes and ingredient lists from tblsp for caloric calculation. Users confirm/adjust
 quantities during import since recipes may not be followed exactly. Changes remain
-local to FeedBag.
+local to MuffinTop.
 
 ### Validation Summary
 

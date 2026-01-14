@@ -11,7 +11,7 @@ build/
 *.sqlite
 *.sqlite3
 backend/db/usda/
-backend/db/feedbag.db
+backend/db/muffintop.db
 
 # Environment files
 .env

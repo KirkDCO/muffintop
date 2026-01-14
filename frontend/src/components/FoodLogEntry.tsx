@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { FoodLogEntry as FoodLogEntryType } from '@feedbag/shared/types';
+import type { FoodLogEntry as FoodLogEntryType } from '@muffintop/shared/types';
 
 interface FoodLogEntryProps {
   entry: FoodLogEntryType;

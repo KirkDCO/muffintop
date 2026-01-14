@@ -86,7 +86,7 @@
 
 ### User
 
-Account holder in the FeedBag system.
+Account holder in the MuffinTop system.
 
 | Field | Type | Constraints | Description |
 |-------|------|-------------|-------------|

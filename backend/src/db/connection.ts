@@ -8,7 +8,7 @@ let tblspDb: Database.Database | null = null;
 
 export function getDb(): Database.Database {
   if (!db) {
-    const dbPath = process.env.DATABASE_PATH || './db/feedbag.db';
+    const dbPath = process.env.DATABASE_PATH || './db/muffintop.db';
     const absolutePath = path.isAbsolute(dbPath) ? dbPath : path.resolve(process.cwd(), dbPath);
 
     // Ensure directory exists

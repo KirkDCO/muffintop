@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { User } from '@feedbag/shared/types';
+import type { User } from '@muffintop/shared/types';
 
 interface UserContextValue {
   currentUser: User | null;
@@ -9,7 +9,7 @@ interface UserContextValue {
 
 const UserContext = createContext<UserContextValue | undefined>(undefined);
 
-const USER_STORAGE_KEY = 'feedbag_current_user';
+const USER_STORAGE_KEY = 'muffintop_current_user';
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUserState] = useState<User | null>(null);

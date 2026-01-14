@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FoodSearch } from './FoodSearch';
 import { FoodDetail } from './FoodDetail';
-import type { FoodSummary, MealCategory, CreateFoodLogInput } from '@feedbag/shared/types';
+import type { FoodSummary, MealCategory, CreateFoodLogInput } from '@muffintop/shared/types';
 
 interface LogFoodModalProps {
   date: string;

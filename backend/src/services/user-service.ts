@@ -1,6 +1,6 @@
 import { getDb } from '../db/connection.js';
 import { ConflictError, NotFoundError } from '../middleware/error-handler.js';
-import type { User } from '@feedbag/shared/types';
+import type { User } from '@muffintop/shared/types';
 import type { CreateUserInput } from '../models/user.js';
 
 interface UserRow {

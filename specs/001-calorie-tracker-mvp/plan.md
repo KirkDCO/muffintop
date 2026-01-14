@@ -5,7 +5,7 @@
 
 ## Summary
 
-FeedBag is a multi-user calorie and nutrient tracking application for LAN deployment.
+MuffinTop is a multi-user calorie and nutrient tracking application for LAN deployment.
 Users can search USDA FoodData Central for foods, log daily intake, create recipes
 (including import from tblsp), set expenditure targets, and visualize intake vs
 expenditure over time. The MVP focuses on simplicity with user selection (no auth)
@@ -68,7 +68,7 @@ backend/
 │   ├── middleware/      # Express middleware (user context, error handling)
 │   └── utils/           # Utilities (USDA import, tblsp adapter)
 ├── db/
-│   ├── schema.sql       # FeedBag schema
+│   ├── schema.sql       # MuffinTop schema
 │   └── usda/            # USDA data files (gitignored)
 └── tests/
     ├── unit/

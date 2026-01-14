@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FoodSearch } from '../components/FoodSearch';
 import { FoodDetail } from '../components/FoodDetail';
-import type { FoodSummary } from '@feedbag/shared/types';
+import type { FoodSummary } from '@muffintop/shared/types';
 
 export function Foods() {
   const [selectedFood, setSelectedFood] = useState<FoodSummary | null>(null);

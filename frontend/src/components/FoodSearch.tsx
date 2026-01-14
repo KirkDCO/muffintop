@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useFoodSearch } from '../hooks/useFoodSearch';
 import { FoodCard } from './FoodCard';
-import type { FoodSummary } from '@feedbag/shared/types';
+import type { FoodSummary } from '@muffintop/shared/types';
 
 interface FoodSearchProps {
   onSelect?: (food: FoodSummary) => void;

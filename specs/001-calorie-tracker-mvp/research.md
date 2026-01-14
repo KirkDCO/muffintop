@@ -160,8 +160,8 @@ ingredient (id, recipe_id, name, quantity, original_text, position)
 **Decision**: Read-only SQLite connection to tblsp database (path configured via environment variable)
 
 **Mapping**:
-- `recipe.title` → FeedBag recipe name
-- `ingredient.name` → Search FeedBag food database
+- `recipe.title` → MuffinTop recipe name
+- `ingredient.name` → Search MuffinTop food database
 - `ingredient.quantity` → Parse and convert to grams (user confirmation required)
 - `ingredient.original_text` → Display for user reference
 
@@ -186,7 +186,7 @@ async function importFromTblsp(recipeId: number) {
     ingredients: ingredients.map(ing => ({
       originalText: ing.original_text,
       parsedQuantity: parseQuantity(ing.quantity), // "1 cup" → { amount: 1, unit: "cup" }
-      suggestedFoods: await searchFoods(ing.name), // FeedBag search
+      suggestedFoods: await searchFoods(ing.name), // MuffinTop search
       needsConfirmation: true
     }))
   };

@@ -1,4 +1,4 @@
-# Quickstart Guide: FeedBag Calorie Tracker
+# Quickstart Guide: MuffinTop Calorie Tracker
 
 **Date**: 2026-01-13
 **Phase**: 1 - Design
@@ -16,7 +16,7 @@
 
 ```bash
 # Clone repository (if not already done)
-cd ~/Projects/feedbag
+cd ~/Projects/muffintop
 
 # Install backend dependencies
 cd backend && npm install
@@ -34,7 +34,7 @@ cd ../shared && npm install
 ```env
 PORT=3002
 NODE_ENV=development
-DATABASE_PATH=./db/feedbag.db
+DATABASE_PATH=./db/muffintop.db
 USDA_DATABASE_PATH=./db/usda/fooddata.db
 TBLSP_DATABASE_PATH=~/Projects/tblsp/backend/db/recipes.db
 CORS_ORIGIN=http://localhost:5173
@@ -54,7 +54,7 @@ VITE_API_URL=http://localhost:3002/api/v1
 ```bash
 cd backend
 
-# Initialize FeedBag schema
+# Initialize MuffinTop schema
 npm run db:init
 
 # Download and import USDA data (one-time, ~10 minutes)
@@ -80,7 +80,7 @@ Access the application at: `http://localhost:5173`
 ## Directory Structure
 
 ```
-feedbag/
+muffintop/
 ├── backend/
 │   ├── src/
 │   │   ├── api/           # Route handlers
@@ -90,8 +90,8 @@ feedbag/
 │   │   ├── middleware/    # Express middleware
 │   │   └── utils/         # Import scripts
 │   ├── db/
-│   │   ├── schema.sql     # FeedBag schema
-│   │   ├── feedbag.db     # User data (gitignored)
+│   │   ├── schema.sql     # MuffinTop schema
+│   │   ├── muffintop.db     # User data (gitignored)
 │   │   └── usda/          # USDA data (gitignored)
 │   └── tests/
 ├── frontend/
@@ -237,7 +237,7 @@ To enable recipe import from tblsp:
 npm run tblsp:verify
 ```
 
-**Note**: tblsp does not need to be running for import to work - FeedBag reads directly from the SQLite database file.
+**Note**: tblsp does not need to be running for import to work - MuffinTop reads directly from the SQLite database file.
 
 Import flow:
 1. GET `/users/:id/recipes/import/tblsp` - List available recipes
@@ -253,14 +253,14 @@ Create `backend/.env.production` with server-specific paths:
 ```env
 PORT=3002
 NODE_ENV=production
-DATABASE_PATH=/path/to/feedbag/db/feedbag.db
-USDA_DATABASE_PATH=/path/to/feedbag/db/usda/fooddata.db
+DATABASE_PATH=/path/to/muffintop/db/muffintop.db
+USDA_DATABASE_PATH=/path/to/muffintop/db/usda/fooddata.db
 TBLSP_DATABASE_PATH=/path/to/tblsp/backend/db/recipes.db
 CORS_ORIGIN=http://<server-ip>:3002
 ```
 
 **Important**: Update paths to match your server's installation locations:
-- `DATABASE_PATH`: Where FeedBag stores user data
+- `DATABASE_PATH`: Where MuffinTop stores user data
 - `USDA_DATABASE_PATH`: Where USDA food data is stored
 - `TBLSP_DATABASE_PATH`: Path to tblsp's SQLite database on the server
 

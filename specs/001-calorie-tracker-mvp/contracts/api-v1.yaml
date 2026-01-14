@@ -1,10 +1,10 @@
 openapi: 3.0.3
 info:
-  title: FeedBag API
+  title: MuffinTop API
   description: Calorie and nutrient tracking API for LAN-hosted household use
   version: 1.0.0
   contact:
-    name: FeedBag
+    name: MuffinTop
 servers:
   - url: http://localhost:3002/api/v1
     description: Development server

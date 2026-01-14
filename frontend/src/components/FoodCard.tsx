@@ -1,4 +1,4 @@
-import type { FoodSummary } from '@feedbag/shared/types';
+import type { FoodSummary } from '@muffintop/shared/types';
 
 interface FoodCardProps {
   food: FoodSummary;

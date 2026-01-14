@@ -1,4 +1,4 @@
-import type { FoodLogEntry } from '@feedbag/shared/types';
+import type { FoodLogEntry } from '@muffintop/shared/types';
 
 interface DailySummaryProps {
   entries: FoodLogEntry[];

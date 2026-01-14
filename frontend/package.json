@@ -1,7 +1,7 @@
 {
-  "name": "@feedbag/frontend",
+  "name": "@muffintop/frontend",
   "version": "0.1.0",
-  "description": "FeedBag calorie tracker frontend",
+  "description": "MuffinTop calorie tracker frontend",
   "type": "module",
   "scripts": {
     "dev": "vite",

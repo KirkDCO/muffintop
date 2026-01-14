@@ -46,7 +46,7 @@
 
 ### Database & Schema
 
-- [x] T011 Create FeedBag database schema in backend/db/schema.sql per data-model.md
+- [x] T011 Create MuffinTop database schema in backend/db/schema.sql per data-model.md
 - [x] T012 Implement database connection module in backend/src/db/connection.ts
 - [x] T013 Create database initialization script in backend/src/db/init.ts
 - [x] T014 Create USDA data import script in scripts/import-usda.ts

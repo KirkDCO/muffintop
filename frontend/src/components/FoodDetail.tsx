@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useFoodDetail } from '../hooks/useFoodSearch';
-import type { FoodPortion } from '@feedbag/shared/types';
+import type { FoodPortion } from '@muffintop/shared/types';
 
 interface FoodDetailProps {
   fdcId: number;

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
-import type { FoodSummary, FoodDetail, FoodSearchResult } from '@feedbag/shared/types';
+import type { FoodSummary, FoodDetail, FoodSearchResult } from '@muffintop/shared/types';
 
 interface SearchParams {
   q: string;

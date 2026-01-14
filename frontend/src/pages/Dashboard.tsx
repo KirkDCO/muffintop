@@ -5,7 +5,7 @@ import { DailySummary } from '../components/DailySummary';
 import { FoodLogEntry } from '../components/FoodLogEntry';
 import { RecentFoods } from '../components/RecentFoods';
 import { LogFoodModal } from '../components/LogFoodModal';
-import type { CreateFoodLogInput, MealCategory } from '@feedbag/shared/types';
+import type { CreateFoodLogInput, MealCategory } from '@muffintop/shared/types';
 
 function getToday(): string {
   return new Date().toISOString().split('T')[0];

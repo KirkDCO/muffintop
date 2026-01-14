@@ -3,7 +3,7 @@
 **Feature Branch**: `001-calorie-tracker-mvp`
 **Created**: 2026-01-13
 **Status**: Draft
-**Input**: Full MVP for FeedBag calorie and nutrient tracking application
+**Input**: Full MVP for MuffinTop calorie and nutrient tracking application
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -99,8 +99,8 @@ by enabling tracking of home cooking.
    from tblsp, **Then** the system displays the ingredients and prompts them to
    confirm or adjust quantities before saving.
 
-6. **Given** an imported tblsp recipe, **When** the user modifies it in FeedBag,
-   **Then** the changes remain local to FeedBag and do not affect tblsp.
+6. **Given** an imported tblsp recipe, **When** the user modifies it in MuffinTop,
+   **Then** the changes remain local to MuffinTop and do not affect tblsp.
 
 ---
 
@@ -284,7 +284,7 @@ only their own data. Delivers value through privacy and personalization.
   from the tblsp project database for caloric calculation purposes.
 - **FR-012a**: When importing a tblsp recipe, the system MUST prompt the user to
   confirm or adjust ingredient quantities, as recipes may not be followed exactly.
-- **FR-012b**: Imported recipes become independent FeedBag recipes; changes do not
+- **FR-012b**: Imported recipes become independent MuffinTop recipes; changes do not
   sync back to tblsp.
 
 **Targets and Progress**

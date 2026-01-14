@@ -1,6 +1,6 @@
 import { getDb } from '../db/connection.js';
 import { NotFoundError } from '../middleware/error-handler.js';
-import type { FoodSummary, FoodDetail, FoodPortion, FoodSearchResult } from '@feedbag/shared/types';
+import type { FoodSummary, FoodDetail, FoodPortion, FoodSearchResult } from '@muffintop/shared/types';
 import type { FoodSearchQuery } from '../models/food.js';
 
 interface FoodRow {

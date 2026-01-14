@@ -1,7 +1,7 @@
 {
-  "name": "@feedbag/backend",
+  "name": "@muffintop/backend",
   "version": "0.1.0",
-  "description": "FeedBag calorie tracker backend API",
+  "description": "MuffinTop calorie tracker backend API",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {

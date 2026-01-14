@@ -22,7 +22,7 @@
   Follow-up TODOs: None
 -->
 
-# FeedBag Constitution
+# MuffinTop Constitution
 
 A TypeScript/Node.js calorie and nutrient tracking application enabling users to
 log daily intake, create recipes from a nutritional database, and visualize
@@ -120,7 +120,7 @@ Each user's health data and dietary information is personal and private.
 
 ## Governance
 
-This constitution establishes the non-negotiable principles for FeedBag
+This constitution establishes the non-negotiable principles for MuffinTop
 development. All implementation decisions MUST align with these principles.
 
 ### Amendment Process

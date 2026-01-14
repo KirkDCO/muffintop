@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { User } from '@feedbag/shared/types';
+import type { User } from '@muffintop/shared/types';
 
 interface UserSelectorProps {
   users: User[];

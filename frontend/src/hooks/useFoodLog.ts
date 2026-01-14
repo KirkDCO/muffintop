@@ -6,7 +6,7 @@ import type {
   CreateFoodLogInput,
   UpdateFoodLogInput,
   RecentFood,
-} from '@feedbag/shared/types';
+} from '@muffintop/shared/types';
 
 interface FoodLogResponse {
   entries: FoodLogEntry[];

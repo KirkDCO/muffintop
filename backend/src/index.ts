@@ -14,7 +14,7 @@ async function main(): Promise<void> {
     const app = createApp();
 
     const server = app.listen(PORT, () => {
-      console.log(`FeedBag API server running on http://localhost:${PORT}`);
+      console.log(`MuffinTop API server running on http://localhost:${PORT}`);
       console.log(`Health check: http://localhost:${PORT}/health`);
       console.log(`API base: http://localhost:${PORT}/api/v1`);
     });
