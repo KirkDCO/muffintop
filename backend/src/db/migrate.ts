@@ -102,6 +102,36 @@ export function runMigrations(): number {
 }
 
 /**
+ * Marks all migrations as applied without running them
+ * Used when schema.sql is already at the latest version (e.g., fresh install)
+ */
+export function markAllMigrationsApplied(): void {
+  ensureMigrationsTable();
+
+  if (!fs.existsSync(MIGRATIONS_DIR)) {
+    return;
+  }
+
+  const db = getDb();
+  const files = fs.readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith('.sql')).sort();
+  const applied = getAppliedMigrations();
+
+  const stmt = db.prepare('INSERT OR IGNORE INTO _migrations (filename) VALUES (?)');
+  let count = 0;
+
+  for (const file of files) {
+    if (!applied.has(file)) {
+      stmt.run(file);
+      count++;
+    }
+  }
+
+  if (count > 0) {
+    console.log(`Marked ${count} migration(s) as applied.`);
+  }
+}
+
+/**
  * Lists all migrations and their status
  */
 export function listMigrations(): void {

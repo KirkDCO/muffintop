@@ -1,5 +1,5 @@
 import { getDb, closeDb } from './connection.js';
-import { runMigrations } from './migrate.js';
+import { runMigrations, markAllMigrationsApplied } from './migrate.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -38,9 +38,16 @@ export function initializeDatabase(reset = false): void {
   db.exec(schema);
   console.log('Database schema initialized successfully.');
 
-  // Run any pending migrations
-  console.log('Checking for pending migrations...');
-  runMigrations();
+  // Handle migrations
+  if (reset) {
+    // Fresh schema is already at latest version, just mark migrations as applied
+    console.log('Marking migrations as applied (fresh schema is current)...');
+    markAllMigrationsApplied();
+  } else {
+    // Run any pending migrations for existing databases
+    console.log('Checking for pending migrations...');
+    runMigrations();
+  }
 
   // Seed sample data for testing
   seedSampleData(db);
