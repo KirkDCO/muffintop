@@ -21,6 +21,7 @@ import { createInterface } from 'readline';
 import { createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
 import { createUnzip } from 'zlib';
+import { fileURLToPath } from 'url';
 import {
   NUTRIENT_REGISTRY,
   ALL_NUTRIENT_KEYS,
@@ -28,9 +29,12 @@ import {
   type NutrientKey,
 } from '@muffintop/shared/types';
 
-// Configuration
+// Configuration - use absolute paths based on script location
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const PROJECT_ROOT = path.resolve(__dirname, '..');
 const USDA_DOWNLOAD_URL = 'https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_csv_2024-10-31.zip';
-const DATA_DIR = './backend/db/usda';
+const DATA_DIR = path.join(PROJECT_ROOT, 'backend/db/usda');
 const ZIP_PATH = path.join(DATA_DIR, 'FoodData_Central.zip');
 const CSV_DIR = path.join(DATA_DIR, 'csv');
 const DB_PATH = path.join(DATA_DIR, 'fooddata.db');
