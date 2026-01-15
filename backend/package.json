@@ -18,9 +18,7 @@
     "db:migrate": "tsx src/db/migrate.ts run",
     "db:migrate:list": "tsx src/db/migrate.ts list",
     "db:verify": "tsx src/db/verify.ts",
-    "usda:download": "tsx scripts/download-usda.ts",
-    "usda:import": "tsx scripts/import-usda.ts",
-    "usda:verify": "tsx scripts/verify-usda.ts",
+    "usda:import": "tsx ../scripts/import-usda.ts",
     "tblsp:verify": "tsx scripts/verify-tblsp.ts"
   },
   "dependencies": {

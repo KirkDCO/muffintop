@@ -34,37 +34,25 @@ NODE_ENV=production
 ### 3. Initialize the Database
 
 ```bash
-# First time setup - creates database and imports USDA data
+# Create main database with schema
 npm run db:init
+
+# Download and import USDA food data (~400k foods, ~1.5GB download)
+# This takes 10-20 minutes depending on connection speed
 npm run usda:import
 
-# Optional: seed with test user
+# Options for usda:import:
+#   --foundation-only     Only import ~10k whole foods (faster, smaller)
+#   --skip-download       Skip download, use existing CSV files
+#   --branded-limit N     Limit branded foods to N items
+
+# Optional: seed with test user for demo
 npx tsx scripts/create-test-data.ts
 ```
 
-### 4. Serve Frontend from Backend
+**Note**: The app works without USDA import using 24 sample foods. Run the import for the full food database.
 
-Modify `backend/src/app.ts` to serve static files (one-time change):
-
-```typescript
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-// Add after API routes, before error handler:
-if (process.env.NODE_ENV === 'production') {
-  const frontendPath = path.join(__dirname, '../../frontend/dist');
-  app.use(express.static(frontendPath));
-  app.get('*', (_req, res) => {
-    res.sendFile(path.join(frontendPath, 'index.html'));
-  });
-}
-```
-
-Rebuild after this change: `npm run build -w backend`
-
-### 5. Run the Server
+### 4. Run the Server
 
 ```bash
 npm run start:prod
@@ -212,6 +200,7 @@ sqlite3 backend/db/muffintop.db ".backup 'backup/muffintop.db'"
 | `PORT` | `3002` | Server port |
 | `NODE_ENV` | `development` | Environment (`production` for optimizations) |
 | `CORS_ORIGIN` | `http://localhost:5173` | Allowed CORS origin |
+| `USDA_DATABASE_PATH` | `backend/db/usda/fooddata.db` | Path to USDA food database |
 | `TBLSP_DB_PATH` | (none) | Path to tblsp database for recipe import |
 
 ---

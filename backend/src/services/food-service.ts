@@ -1,4 +1,5 @@
 import { getDb } from '../db/connection.js';
+import { getUsdaDb } from '../db/usda-connection.js';
 import { NotFoundError } from '../middleware/error-handler.js';
 import {
   NUTRIENT_REGISTRY,
@@ -12,6 +13,14 @@ import {
   type NutrientValues,
 } from '@muffintop/shared/types';
 import type { FoodSearchQuery } from '../models/food.js';
+
+/**
+ * Get the database to use for food queries
+ * Prefers USDA database if available, falls back to main db
+ */
+function getFoodDb() {
+  return getUsdaDb() || getDb();
+}
 
 // Pre-compute nutrient columns for SQL
 const NUTRIENT_COLUMNS_SQL = getNutrientColumnsSql();
@@ -56,7 +65,7 @@ function rowToFoodPortion(row: FoodPortionRow): FoodPortion {
 
 export const foodService = {
   search(query: FoodSearchQuery): FoodSearchResult {
-    const db = getDb();
+    const db = getFoodDb();
 
     // Use FTS5 for search
     let sql = `
@@ -102,7 +111,7 @@ export const foodService = {
   },
 
   getById(fdcId: number): FoodDetail {
-    const db = getDb();
+    const db = getFoodDb();
 
     const foodRow = db
       .prepare(

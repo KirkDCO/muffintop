@@ -28,6 +28,8 @@
     "setup": "npm install && npm run db:init && npm run usda:import && npm run build"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
+    "adm-zip": "^0.5.16",
     "concurrently": "^9.1.2"
   },
   "engines": {
