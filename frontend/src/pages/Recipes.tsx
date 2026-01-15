@@ -21,6 +21,7 @@ export function Recipes() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [selectedRecipeId, setSelectedRecipeId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const { currentUser } = useUser();
   const currentUserId = currentUser?.id;
@@ -52,9 +53,15 @@ export function Recipes() {
   };
 
   const handleDeleteRecipe = (recipe: RecipeSummary) => {
-    if (confirm(`Delete recipe "${recipe.name}"?`)) {
-      deleteMutation.mutate(recipe.id);
-    }
+    setDeleteError(null);
+    deleteMutation.mutate(recipe.id, {
+      onError: (error) => {
+        const message = (error as { message?: string })?.message
+          || 'Failed to delete recipe';
+        setDeleteError(message);
+        setTimeout(() => setDeleteError(null), 5000);
+      },
+    });
   };
 
   const handleCreate = async (input: CreateRecipeInput) => {
@@ -113,6 +120,10 @@ export function Recipes() {
               className="search-input"
             />
           </div>
+
+          {deleteError && (
+            <div className="error-message">{deleteError}</div>
+          )}
 
           {isLoading ? (
             <p className="status">Loading recipes...</p>
@@ -249,6 +260,14 @@ export function Recipes() {
         }
         .status {
           color: #888;
+        }
+        .error-message {
+          padding: 0.75rem 1rem;
+          margin-bottom: 1rem;
+          background: #4a1c1c;
+          border: 1px solid #8b3333;
+          border-radius: 4px;
+          color: #ff9999;
         }
       `}</style>
     </div>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FoodSearch } from './FoodSearch';
 import { IngredientRow } from './IngredientRow';
-import type { FoodSummary, CreateRecipeInput, CreateRecipeIngredientInput } from '@muffintop/shared/types';
+import type { FoodSummary, CustomFoodSummary, RecipeSummary, CreateRecipeInput, CreateRecipeIngredientInput } from '@muffintop/shared/types';
 
 interface RecipeIngredientDraft extends CreateRecipeIngredientInput {
   foodName: string;
@@ -44,6 +44,30 @@ export function RecipeBuilder({
     setShowFoodSearch(false);
   };
 
+  const handleAddCustomFood = (customFood: CustomFoodSummary) => {
+    setIngredients([
+      ...ingredients,
+      {
+        customFoodId: customFood.id,
+        quantityGrams: 1, // Custom foods use servings, not grams - default to 1 serving
+        foodName: customFood.name,
+      },
+    ]);
+    setShowFoodSearch(false);
+  };
+
+  const handleAddRecipe = (recipe: RecipeSummary) => {
+    setIngredients([
+      ...ingredients,
+      {
+        ingredientRecipeId: recipe.id,
+        quantityGrams: 1, // Recipes use servings - default to 1 serving
+        foodName: recipe.name,
+      },
+    ]);
+    setShowFoodSearch(false);
+  };
+
   const handleRemoveIngredient = (index: number) => {
     setIngredients(ingredients.filter((_, i) => i !== index));
   };
@@ -68,6 +92,7 @@ export function RecipeBuilder({
       ingredients: ingredients.map((ing) => ({
         foodId: ing.foodId,
         customFoodId: ing.customFoodId,
+        ingredientRecipeId: ing.ingredientRecipeId,
         quantityGrams: ing.quantityGrams,
         displayQuantity: ing.displayQuantity,
       })),
@@ -130,6 +155,8 @@ export function RecipeBuilder({
                   key={index}
                   foodName={ing.foodName}
                   fdcId={ing.foodId}
+                  customFoodId={ing.customFoodId}
+                  ingredientRecipeId={ing.ingredientRecipeId}
                   quantityGrams={ing.quantityGrams}
                   displayQuantity={ing.displayQuantity}
                   onPortionChange={(grams, display) => handlePortionChange(index, grams, display)}
@@ -147,7 +174,13 @@ export function RecipeBuilder({
                   Cancel
                 </button>
               </div>
-              <FoodSearch onSelect={handleAddFood} placeholder="Search for an ingredient..." />
+              <FoodSearch
+                onSelect={handleAddFood}
+                onSelectCustomFood={handleAddCustomFood}
+                onSelectRecipe={handleAddRecipe}
+                includeRecipes={true}
+                placeholder="Search for an ingredient..."
+              />
             </div>
           ) : (
             <button className="add-ingredient-btn" onClick={() => setShowFoodSearch(true)}>

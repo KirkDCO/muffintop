@@ -1,49 +1,85 @@
 import { useState, useEffect } from 'react';
 import { useFoodDetail } from '../hooks/useFoodSearch';
+import { useCustomFood } from '../hooks/useCustomFoods';
+import { useRecipe } from '../hooks/useRecipes';
 
 interface PortionOption {
-  id: string; // 'grams' or portion id
+  id: string;
   label: string;
-  gramWeight: number;
+  value: number; // For USDA: gram weight. For custom/recipe: serving multiplier.
 }
 
 interface PortionSelectorProps {
-  fdcId: number;
-  initialGrams?: number;
+  fdcId?: number;
+  customFoodId?: number;
+  ingredientRecipeId?: number;
+  initialValue?: number; // For USDA: grams. For custom/recipe: servings.
   initialDisplay?: string;
-  onChange: (grams: number, displayQuantity: string) => void;
+  onChange: (value: number, displayQuantity: string) => void;
 }
 
 export function PortionSelector({
   fdcId,
-  initialGrams = 100,
+  customFoodId,
+  ingredientRecipeId,
+  initialValue = fdcId ? 100 : 1, // Default 100g for USDA, 1 serving for custom/recipe
   initialDisplay = '',
   onChange,
 }: PortionSelectorProps) {
-  const { data: foodDetail, isLoading } = useFoodDetail(fdcId);
+  // Fetch USDA food detail if fdcId provided
+  const { data: foodDetail, isLoading: isFoodLoading } = useFoodDetail(fdcId ?? null);
+  // Fetch custom food detail if customFoodId provided
+  const { data: customFoodDetail, isLoading: isCustomFoodLoading } = useCustomFood(customFoodId ?? null);
+  // Fetch recipe detail if ingredientRecipeId provided (used for loading state)
+  const { isLoading: isRecipeLoading } = useRecipe(ingredientRecipeId ?? null);
+
+  const isLoading = fdcId ? isFoodLoading : customFoodId ? isCustomFoodLoading : ingredientRecipeId ? isRecipeLoading : false;
+  // Custom foods and recipes both work in servings
+  const isServingsMode = !!customFoodId || !!ingredientRecipeId;
 
   const [amount, setAmount] = useState<number>(1);
-  const [selectedPortionId, setSelectedPortionId] = useState<string>('grams');
-  const [manualGrams, setManualGrams] = useState<number>(initialGrams);
+  const [selectedPortionId, setSelectedPortionId] = useState<string>(isServingsMode ? 'servings' : 'grams');
+  const [manualValue, setManualValue] = useState<number>(initialValue);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
-  // Build portion options from food detail
-  const portionOptions: PortionOption[] = [
-    { id: 'grams', label: 'grams', gramWeight: 1 },
-  ];
+  // Build portion options based on food type
+  const portionOptions: PortionOption[] = [];
 
-  if (foodDetail?.portions) {
-    for (const portion of foodDetail.portions) {
-      portionOptions.push({
-        id: String(portion.id),
-        label: portion.description,
-        gramWeight: portion.gramWeight,
-      });
+  if (ingredientRecipeId) {
+    // Recipe ingredient: work in servings (recipes don't have custom portions)
+    portionOptions.push({ id: 'servings', label: 'serving(s)', value: 1 });
+  } else if (customFoodId) {
+    // Custom food: work in servings
+    portionOptions.push({ id: 'servings', label: 'serving(s)', value: 1 });
+
+    if (customFoodDetail?.portions) {
+      for (const portion of customFoodDetail.portions) {
+        portionOptions.push({
+          id: String(portion.id),
+          label: portion.description,
+          value: portion.servingMultiplier,
+        });
+      }
+    }
+  } else {
+    // USDA food: work in grams
+    portionOptions.push({ id: 'grams', label: 'grams', value: 1 });
+
+    if (foodDetail?.portions) {
+      for (const portion of foodDetail.portions) {
+        portionOptions.push({
+          id: String(portion.id),
+          label: portion.description,
+          value: portion.gramWeight,
+        });
+      }
     }
   }
 
   // Try to auto-detect initial portion from display string
   useEffect(() => {
-    if (foodDetail?.portions && initialDisplay) {
+    const portions = fdcId ? foodDetail?.portions : customFoodDetail?.portions;
+    if (portions && initialDisplay) {
       const displayLower = initialDisplay.toLowerCase();
 
       // Try to parse amount from display (e.g., "2 cups" -> amount=2)
@@ -63,7 +99,7 @@ export function PortionSelector({
         const unitPart = match[2].trim();
 
         // Find matching portion
-        for (const portion of foodDetail.portions) {
+        for (const portion of portions) {
           const portionLower = portion.description.toLowerCase();
           if (portionLower.includes(unitPart) || unitPart.includes(portionLower.split(' ')[0])) {
             setAmount(parsedAmount);
@@ -72,57 +108,82 @@ export function PortionSelector({
           }
         }
 
-        // No portion match, keep as grams with parsed amount
+        // No portion match, keep manual mode with parsed amount
         setAmount(parsedAmount);
       }
     }
-  }, [foodDetail, initialDisplay]);
+  }, [fdcId, foodDetail, customFoodDetail, initialDisplay]);
 
-  // Calculate grams when amount or portion changes
+  // Calculate value when amount or portion changes - only after user interaction
   useEffect(() => {
+    if (!hasUserInteracted) return;
+
     const selectedPortion = portionOptions.find(p => p.id === selectedPortionId);
-    let calculatedGrams: number;
+    let calculatedValue: number;
     let displayQty: string;
 
-    if (selectedPortionId === 'grams') {
-      calculatedGrams = manualGrams;
-      displayQty = `${manualGrams}g`;
+    const isManualMode = selectedPortionId === 'grams' || selectedPortionId === 'servings';
+
+    if (isManualMode) {
+      calculatedValue = manualValue;
+      displayQty = isServingsMode ? `${manualValue} serving(s)` : `${manualValue}g`;
     } else if (selectedPortion) {
-      calculatedGrams = Math.round(amount * selectedPortion.gramWeight);
+      calculatedValue = isServingsMode
+        ? amount * selectedPortion.value  // servings
+        : Math.round(amount * selectedPortion.value);  // grams
       displayQty = `${amount} ${selectedPortion.label}`;
     } else {
-      calculatedGrams = manualGrams;
-      displayQty = `${manualGrams}g`;
+      calculatedValue = manualValue;
+      displayQty = isServingsMode ? `${manualValue} serving(s)` : `${manualValue}g`;
     }
 
-    onChange(calculatedGrams, displayQty);
-  }, [amount, selectedPortionId, manualGrams, portionOptions.length]);
+    onChange(calculatedValue, displayQty);
+  }, [hasUserInteracted, amount, selectedPortionId, manualValue, portionOptions.length, isServingsMode]);
 
+  // Calculate display value for the "= X" label
   const selectedPortion = portionOptions.find(p => p.id === selectedPortionId);
-  const calculatedGrams = selectedPortionId === 'grams'
-    ? manualGrams
-    : Math.round(amount * (selectedPortion?.gramWeight || 1));
+  const isManualMode = selectedPortionId === 'grams' || selectedPortionId === 'servings';
+  const calculatedValue = isManualMode
+    ? manualValue
+    : isServingsMode
+      ? amount * (selectedPortion?.value || 1)
+      : Math.round(amount * (selectedPortion?.value || 1));
 
   if (isLoading) {
     return <span className="loading">Loading portions...</span>;
   }
 
+  const handleAmountChange = (value: number) => {
+    setHasUserInteracted(true);
+    setAmount(value);
+  };
+
+  const handleManualValueChange = (value: number) => {
+    setHasUserInteracted(true);
+    setManualValue(value);
+  };
+
+  const handlePortionSelect = (portionId: string) => {
+    setHasUserInteracted(true);
+    setSelectedPortionId(portionId);
+  };
+
   return (
     <div className="portion-selector">
-      {selectedPortionId === 'grams' ? (
+      {isManualMode ? (
         <input
           type="number"
-          value={manualGrams}
-          onChange={(e) => setManualGrams(Math.max(0, parseFloat(e.target.value) || 0))}
+          value={manualValue}
+          onChange={(e) => handleManualValueChange(Math.max(0, parseFloat(e.target.value) || 0))}
           min="0"
-          step="1"
+          step={isServingsMode ? '0.25' : '1'}
           className="amount-input"
         />
       ) : (
         <input
           type="number"
           value={amount}
-          onChange={(e) => setAmount(Math.max(0, parseFloat(e.target.value) || 0))}
+          onChange={(e) => handleAmountChange(Math.max(0, parseFloat(e.target.value) || 0))}
           min="0"
           step="0.25"
           className="amount-input"
@@ -131,19 +192,24 @@ export function PortionSelector({
 
       <select
         value={selectedPortionId}
-        onChange={(e) => setSelectedPortionId(e.target.value)}
+        onChange={(e) => handlePortionSelect(e.target.value)}
         className="portion-select"
       >
         {portionOptions.map((option) => (
           <option key={option.id} value={option.id}>
             {option.label}
-            {option.id !== 'grams' && ` (${option.gramWeight}g)`}
+            {/* For USDA portions, show gram weight. For custom/recipe portions, show serving multiplier if != 1 */}
+            {!isServingsMode && option.id !== 'grams' && ` (${option.value}g)`}
+            {isServingsMode && option.id !== 'servings' && option.value !== 1 && ` (${option.value} srv)`}
           </option>
         ))}
       </select>
 
-      {selectedPortionId !== 'grams' && (
-        <span className="calculated-grams">= {calculatedGrams}g</span>
+      {/* Show calculated value for non-manual selections */}
+      {!isManualMode && (
+        <span className="calculated-value">
+          = {isServingsMode ? `${calculatedValue} srv` : `${calculatedValue}g`}
+        </span>
       )}
 
       <style>{`
@@ -162,7 +228,7 @@ export function PortionSelector({
           min-width: 120px;
           max-width: 200px;
         }
-        .calculated-grams {
+        .calculated-value {
           color: #888;
           font-size: 0.9rem;
         }

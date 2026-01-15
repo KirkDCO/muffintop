@@ -26,6 +26,7 @@ export function Foods() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [selectedCustomFoodId, setSelectedCustomFoodId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const { currentUser } = useUser();
   const currentUserId = currentUser?.id;
@@ -56,9 +57,17 @@ export function Foods() {
   };
 
   const handleDeleteCustomFood = (food: CustomFoodSummary) => {
-    if (confirm(`Delete custom food "${food.name}"?`)) {
-      deleteMutation.mutate(food.id);
-    }
+    setDeleteError(null);
+    deleteMutation.mutate(food.id, {
+      onError: (error) => {
+        // Extract message from API error response
+        const message = (error as { message?: string })?.message
+          || 'Failed to delete custom food';
+        setDeleteError(message);
+        // Auto-clear error after 5 seconds
+        setTimeout(() => setDeleteError(null), 5000);
+      },
+    });
   };
 
   const handleCreateCustomFood = (input: CreateCustomFoodInput) => {
@@ -151,6 +160,10 @@ export function Foods() {
                   className="search-input"
                 />
               </div>
+
+              {deleteError && (
+                <div className="error-message">{deleteError}</div>
+              )}
 
               {isLoadingCustomFoods ? (
                 <p className="status">Loading custom foods...</p>
@@ -317,6 +330,14 @@ export function Foods() {
         }
         .status {
           color: #888;
+        }
+        .error-message {
+          padding: 0.75rem 1rem;
+          margin-bottom: 1rem;
+          background: #4a1c1c;
+          border: 1px solid #8b3333;
+          border-radius: 4px;
+          color: #ff9999;
         }
       `}</style>
     </div>

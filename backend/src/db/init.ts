@@ -43,23 +43,25 @@ export function initializeDatabase(reset = false): void {
     db.pragma('foreign_keys = ON');
   }
 
-  // Read and execute schema
+  // Read schema file
   const schemaPath = path.resolve(__dirname, '../../db/schema.sql');
   const schema = fs.readFileSync(schemaPath, 'utf-8');
+
+  // For existing databases, run migrations FIRST to update table structures
+  // before schema.sql tries to create indexes on new columns
+  if (!reset && !isFreshDatabase) {
+    console.log('Checking for pending migrations...');
+    runMigrations();
+  }
 
   console.log('Initializing database schema...');
   db.exec(schema);
   console.log('Database schema initialized successfully.');
 
-  // Handle migrations
+  // For fresh/reset databases, mark all migrations as applied
   if (reset || isFreshDatabase) {
-    // Fresh schema is already at latest version, just mark migrations as applied
     console.log('Marking migrations as applied (fresh schema is current)...');
     markAllMigrationsApplied();
-  } else {
-    // Run any pending migrations for existing databases
-    console.log('Checking for pending migrations...');
-    runMigrations();
   }
 
   // Seed sample data for testing

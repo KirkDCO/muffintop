@@ -292,32 +292,41 @@ export function CustomFoodForm({
 
         {showAddPortion ? (
           <div className="add-portion-form">
-            <input
-              type="text"
-              value={newPortionDesc}
-              onChange={(e) => setNewPortionDesc(e.target.value)}
-              placeholder="e.g., 1 bar, 2 scoops"
-              className="portion-desc-input"
-            />
-            <input
-              type="number"
-              value={newPortionMultiplier}
-              onChange={(e) => setNewPortionMultiplier(e.target.value)}
-              placeholder="Servings"
-              min="0.1"
-              step="0.5"
-              className="portion-mult-input"
-              title="Number of servings this portion represents"
-            />
-            <input
-              type="number"
-              value={newPortionGrams}
-              onChange={(e) => setNewPortionGrams(e.target.value)}
-              placeholder="Grams (optional)"
-              min="0"
-              step="1"
-              className="portion-grams-input"
-            />
+            <div className="portion-field">
+              <label className="portion-label">Description</label>
+              <input
+                type="text"
+                value={newPortionDesc}
+                onChange={(e) => setNewPortionDesc(e.target.value)}
+                placeholder="e.g., 1 bar, 2 scoops"
+                className="portion-desc-input"
+              />
+            </div>
+            <div className="portion-field">
+              <label className="portion-label"># Servings</label>
+              <input
+                type="number"
+                value={newPortionMultiplier}
+                onChange={(e) => setNewPortionMultiplier(e.target.value)}
+                placeholder="1"
+                min="0.1"
+                step="0.5"
+                className="portion-mult-input"
+                title="Number of servings this portion represents"
+              />
+            </div>
+            <div className="portion-field">
+              <label className="portion-label">Grams (optional)</label>
+              <input
+                type="number"
+                value={newPortionGrams}
+                onChange={(e) => setNewPortionGrams(e.target.value)}
+                placeholder=""
+                min="0"
+                step="1"
+                className="portion-grams-input"
+              />
+            </div>
             <div className="portion-actions">
               <button type="button" onClick={handleAddPortion} className="add-btn">
                 Add
@@ -458,19 +467,34 @@ export function CustomFoodForm({
         .add-portion-form {
           display: flex;
           flex-wrap: wrap;
-          gap: 0.5rem;
+          gap: 0.75rem;
           padding: 1rem;
           background: #222;
           border-radius: 4px;
         }
-        .portion-desc-input {
+        .portion-field {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+        .portion-field:first-child {
           flex: 1;
           min-width: 150px;
+        }
+        .portion-label {
+          font-size: 0.75rem;
+          color: #888;
+        }
+        .portion-desc-input {
+          padding: 0.5rem;
+          width: 100%;
+        }
+        .portion-mult-input {
+          width: 80px;
           padding: 0.5rem;
         }
-        .portion-mult-input,
         .portion-grams-input {
-          width: 100px;
+          width: 80px;
           padding: 0.5rem;
         }
         .portion-actions {

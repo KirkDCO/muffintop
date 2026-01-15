@@ -59,9 +59,26 @@ function getPendingMigrations(applied: Set<string>): string[] {
 function applyMigration(filename: string): void {
   const db = getDb();
   const filepath = path.join(MIGRATIONS_DIR, filename);
-  const sql = fs.readFileSync(filepath, 'utf-8');
+  let sql = fs.readFileSync(filepath, 'utf-8');
 
   console.log(`Applying migration: ${filename}`);
+
+  // Check if migration needs foreign keys disabled
+  // PRAGMA statements can't run inside transactions, so handle them separately
+  const needsFkOff = sql.toLowerCase().includes('pragma foreign_keys = off');
+  const needsFkOn = sql.toLowerCase().includes('pragma foreign_keys = on');
+
+  // Remove PRAGMA statements from SQL - we'll handle them outside the transaction
+  if (needsFkOff || needsFkOn) {
+    sql = sql
+      .replace(/PRAGMA\s+foreign_keys\s*=\s*OFF\s*;?/gi, '')
+      .replace(/PRAGMA\s+foreign_keys\s*=\s*ON\s*;?/gi, '');
+  }
+
+  // Disable foreign keys if needed (before transaction)
+  if (needsFkOff) {
+    db.pragma('foreign_keys = OFF');
+  }
 
   // Run migration in a transaction
   db.exec('BEGIN TRANSACTION');
@@ -72,7 +89,16 @@ function applyMigration(filename: string): void {
     console.log(`  ✓ Applied successfully`);
   } catch (error) {
     db.exec('ROLLBACK');
+    // Re-enable foreign keys even on error
+    if (needsFkOff) {
+      db.pragma('foreign_keys = ON');
+    }
     throw error;
+  }
+
+  // Re-enable foreign keys if they were disabled
+  if (needsFkOff) {
+    db.pragma('foreign_keys = ON');
   }
 }
 

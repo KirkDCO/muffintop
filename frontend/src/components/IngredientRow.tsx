@@ -3,30 +3,39 @@ import { PortionSelector } from './PortionSelector';
 interface IngredientRowProps {
   foodName: string;
   fdcId?: number;
-  quantityGrams: number;
+  customFoodId?: number;
+  ingredientRecipeId?: number;
+  quantityGrams: number; // For USDA: grams. For custom foods/recipes: servings.
   displayQuantity?: string;
-  onPortionChange?: (grams: number, displayQuantity: string) => void;
+  onPortionChange?: (value: number, displayQuantity: string) => void;
   onRemove: () => void;
 }
 
 export function IngredientRow({
   foodName,
   fdcId,
+  customFoodId,
+  ingredientRecipeId,
   quantityGrams,
   displayQuantity,
   onPortionChange,
   onRemove,
 }: IngredientRowProps) {
+  // Show PortionSelector for USDA foods, custom foods, or recipes with onPortionChange
+  const showPortionSelector = (fdcId || customFoodId || ingredientRecipeId) && onPortionChange;
+
   return (
     <div className="ingredient-row">
       <div className="ingredient-info">
         <span className="ingredient-name">{foodName}</span>
       </div>
       <div className="ingredient-controls">
-        {fdcId && onPortionChange ? (
+        {showPortionSelector ? (
           <PortionSelector
             fdcId={fdcId}
-            initialGrams={quantityGrams}
+            customFoodId={customFoodId}
+            ingredientRecipeId={ingredientRecipeId}
+            initialValue={quantityGrams}
             initialDisplay={displayQuantity}
             onChange={onPortionChange}
           />

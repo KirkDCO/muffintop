@@ -102,7 +102,8 @@ CREATE TABLE IF NOT EXISTS custom_food (
   vitamin_d REAL NOT NULL DEFAULT 0,
   serving_grams REAL,
   is_shared INTEGER NOT NULL DEFAULT 0,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_custom_food_user ON custom_food(user_id);
@@ -155,6 +156,8 @@ CREATE TABLE IF NOT EXISTS food_log (
   meal_category TEXT NOT NULL CHECK (meal_category IN ('breakfast', 'lunch', 'dinner', 'snack')),
   portion_amount REAL NOT NULL,
   portion_grams REAL NOT NULL,
+  -- Snapshot of food name at time of logging (includes version suffix for recipes/custom foods)
+  logged_food_name TEXT,
   -- Calculated nutrients for this log entry
   calories REAL NOT NULL,
   protein REAL NOT NULL,
@@ -246,16 +249,22 @@ CREATE TABLE IF NOT EXISTS recipe_ingredient (
   recipe_id INTEGER NOT NULL REFERENCES recipe(id) ON DELETE CASCADE,
   food_id INTEGER REFERENCES food(fdc_id),
   custom_food_id INTEGER REFERENCES custom_food(id),
+  ingredient_recipe_id INTEGER REFERENCES recipe(id) ON DELETE RESTRICT,
   quantity_grams REAL NOT NULL CHECK (quantity_grams > 0),
   display_quantity TEXT,
   position INTEGER NOT NULL,
+  -- Exactly one of food_id, custom_food_id, or ingredient_recipe_id must be set
   CHECK (
-    (food_id IS NOT NULL AND custom_food_id IS NULL) OR
-    (food_id IS NULL AND custom_food_id IS NOT NULL)
-  )
+    (food_id IS NOT NULL AND custom_food_id IS NULL AND ingredient_recipe_id IS NULL) OR
+    (food_id IS NULL AND custom_food_id IS NOT NULL AND ingredient_recipe_id IS NULL) OR
+    (food_id IS NULL AND custom_food_id IS NULL AND ingredient_recipe_id IS NOT NULL)
+  ),
+  -- Prevent self-referential recipes
+  CHECK (recipe_id != ingredient_recipe_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_recipe_ingredient_recipe ON recipe_ingredient(recipe_id);
+CREATE INDEX IF NOT EXISTS idx_recipe_ingredient_ingredient_recipe ON recipe_ingredient(ingredient_recipe_id);
 
 -- ============================================
 -- Targets and Activity

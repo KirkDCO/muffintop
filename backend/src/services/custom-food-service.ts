@@ -1,5 +1,5 @@
 import { getDb } from '../db/connection.js';
-import { NotFoundError } from '../middleware/error-handler.js';
+import { NotFoundError, ConflictError } from '../middleware/error-handler.js';
 import {
   getNutrientDbColumns,
   createEmptyNutrientValues,
@@ -25,6 +25,7 @@ interface CustomFoodRow {
   serving_grams: number | null;
   is_shared: number;
   created_at: string;
+  updated_at: string;
   [key: string]: unknown;
 }
 
@@ -86,7 +87,7 @@ export const customFoodService = {
     if (search && search.length >= 2) {
       // Use FTS search - user's own + shared from others
       sql = `
-        SELECT cf.id, cf.user_id, cf.name, cf.calories, cf.is_shared, cf.created_at
+        SELECT cf.id, cf.user_id, cf.name, cf.calories, cf.is_shared, cf.created_at, cf.updated_at
         FROM custom_food cf
         JOIN custom_food_fts fts ON cf.id = fts.rowid
         WHERE (cf.user_id = ? OR cf.is_shared = 1) AND custom_food_fts MATCH ?
@@ -102,7 +103,7 @@ export const customFoodService = {
     } else {
       // No search, return recent - user's own + shared from others
       sql = `
-        SELECT id, user_id, name, calories, is_shared, created_at
+        SELECT id, user_id, name, calories, is_shared, created_at, updated_at
         FROM custom_food
         WHERE user_id = ? OR is_shared = 1
         ORDER BY created_at DESC
@@ -118,6 +119,7 @@ export const customFoodService = {
       calories: number;
       is_shared: number;
       created_at: string;
+      updated_at: string;
     }>;
 
     return rows.map((row) => ({
@@ -127,6 +129,7 @@ export const customFoodService = {
       caloriesPerServing: row.calories,  // Already per-serving
       isShared: row.is_shared === 1,
       createdAt: row.created_at,
+      updatedAt: row.updated_at,
     }));
   },
 
@@ -141,7 +144,7 @@ export const customFoodService = {
     const nutrientColumns = NUTRIENT_DB_COLUMNS.join(', ');
     const customFood = db
       .prepare(
-        `SELECT id, user_id, name, serving_grams, is_shared, created_at, ${nutrientColumns}
+        `SELECT id, user_id, name, serving_grams, is_shared, created_at, updated_at, ${nutrientColumns}
          FROM custom_food WHERE id = ? AND (user_id = ? OR is_shared = 1)`
       )
       .get(customFoodId, userId) as CustomFoodRow | undefined;
@@ -174,6 +177,7 @@ export const customFoodService = {
       })),
       isShared: customFood.is_shared === 1,
       createdAt: customFood.created_at,
+      updatedAt: customFood.updated_at,
     };
   },
 
@@ -245,7 +249,7 @@ export const customFoodService = {
     // Update custom food
     db.prepare(
       `UPDATE custom_food
-       SET name = ?, serving_grams = ?, is_shared = ?, ${nutrientUpdates}
+       SET name = ?, serving_grams = ?, is_shared = ?, ${nutrientUpdates}, updated_at = datetime('now')
        WHERE id = ? AND user_id = ?`
     ).run(
       input.name,
@@ -284,12 +288,20 @@ export const customFoodService = {
   delete(userId: number, customFoodId: number): void {
     const db = getDb();
 
-    const result = db
-      .prepare('DELETE FROM custom_food WHERE id = ? AND user_id = ?')
-      .run(customFoodId, userId);
+    try {
+      const result = db
+        .prepare('DELETE FROM custom_food WHERE id = ? AND user_id = ?')
+        .run(customFoodId, userId);
 
-    if (result.changes === 0) {
-      throw new NotFoundError(`Custom food with id ${customFoodId} not found`);
+      if (result.changes === 0) {
+        throw new NotFoundError(`Custom food with id ${customFoodId} not found`);
+      }
+    } catch (err) {
+      // Handle foreign key constraint - custom food is referenced by food log or recipe
+      if (err instanceof Error && 'code' in err && err.code === 'SQLITE_CONSTRAINT_FOREIGNKEY') {
+        throw new ConflictError('Cannot delete this custom food because it is used in your food log or recipes. Remove those entries first.');
+      }
+      throw err;
     }
   },
 
@@ -312,7 +324,7 @@ export const customFoodService = {
 
     const rows = db
       .prepare(
-        `SELECT cf.id, cf.user_id, cf.name, cf.calories, cf.is_shared, cf.created_at
+        `SELECT cf.id, cf.user_id, cf.name, cf.calories, cf.is_shared, cf.created_at, cf.updated_at
          FROM custom_food cf
          JOIN custom_food_fts fts ON cf.id = fts.rowid
          WHERE (cf.user_id = ? OR cf.is_shared = 1) AND custom_food_fts MATCH ?
@@ -326,6 +338,7 @@ export const customFoodService = {
       calories: number;
       is_shared: number;
       created_at: string;
+      updated_at: string;
     }>;
 
     return rows.map((row) => ({
@@ -335,6 +348,7 @@ export const customFoodService = {
       caloriesPerServing: row.calories,
       isShared: row.is_shared === 1,
       createdAt: row.created_at,
+      updatedAt: row.updated_at,
     }));
   },
 };

@@ -8,12 +8,14 @@ import {
 import { useImportTblspRecipe } from '../hooks/useRecipes';
 import { FoodSearch } from './FoodSearch';
 import { PortionSelector } from './PortionSelector';
-import type { FoodSummary, ImportTblspRecipeInput, ImportIngredientMapping } from '@muffintop/shared/types';
+import type { FoodSummary, CustomFoodSummary, RecipeSummary, ImportTblspRecipeInput, ImportIngredientMapping } from '@muffintop/shared/types';
 
 interface IngredientMapping {
   originalText: string;
   food: FoodSummary | null;
-  quantityGrams: number;
+  customFood: CustomFoodSummary | null;
+  recipe: RecipeSummary | null;
+  quantityGrams: number; // For USDA: grams. For custom/recipe: servings.
   displayQuantity: string;
   skipped: boolean;
 }
@@ -56,7 +58,9 @@ export function TblspImport({ onComplete, onCancel }: TblspImportProps) {
         selectedRecipe.ingredients.map((ing) => ({
           originalText: ing.originalText,
           food: null,
-          quantityGrams: 100, // Default
+          customFood: null,
+          recipe: null,
+          quantityGrams: 100, // Default for USDA, will be 1 for custom/recipe
           displayQuantity: ing.quantity || '',
           skipped: false,
         }))
@@ -72,7 +76,25 @@ export function TblspImport({ onComplete, onCancel }: TblspImportProps) {
   const handleMapFood = (index: number, food: FoodSummary) => {
     setMappings(
       mappings.map((m, i) =>
-        i === index ? { ...m, food, skipped: false } : m
+        i === index ? { ...m, food, customFood: null, recipe: null, quantityGrams: 100, skipped: false } : m
+      )
+    );
+    setActiveMappingIndex(null);
+  };
+
+  const handleMapCustomFood = (index: number, customFood: CustomFoodSummary) => {
+    setMappings(
+      mappings.map((m, i) =>
+        i === index ? { ...m, food: null, customFood, recipe: null, quantityGrams: 1, skipped: false } : m
+      )
+    );
+    setActiveMappingIndex(null);
+  };
+
+  const handleMapRecipe = (index: number, recipe: RecipeSummary) => {
+    setMappings(
+      mappings.map((m, i) =>
+        i === index ? { ...m, food: null, customFood: null, recipe, quantityGrams: 1, skipped: false } : m
       )
     );
     setActiveMappingIndex(null);
@@ -81,7 +103,7 @@ export function TblspImport({ onComplete, onCancel }: TblspImportProps) {
   const handleSkipIngredient = (index: number) => {
     setMappings(
       mappings.map((m, i) =>
-        i === index ? { ...m, skipped: true, food: null } : m
+        i === index ? { ...m, skipped: true, food: null, customFood: null, recipe: null } : m
       )
     );
     setActiveMappingIndex(null);
@@ -95,7 +117,7 @@ export function TblspImport({ onComplete, onCancel }: TblspImportProps) {
     );
   };
 
-  const mappedCount = mappings.filter((m) => m.food !== null).length;
+  const mappedCount = mappings.filter((m) => m.food !== null || m.customFood !== null || m.recipe !== null).length;
   const skippedCount = mappings.filter((m) => m.skipped).length;
   const canProceed = mappedCount > 0 && mappedCount + skippedCount === mappings.length;
 
@@ -103,10 +125,12 @@ export function TblspImport({ onComplete, onCancel }: TblspImportProps) {
     if (!selectedRecipeId) return;
 
     const ingredientMappings: ImportIngredientMapping[] = mappings
-      .filter((m) => m.food !== null && !m.skipped)
+      .filter((m) => (m.food !== null || m.customFood !== null || m.recipe !== null) && !m.skipped)
       .map((m) => ({
         originalText: m.originalText,
-        foodId: m.food!.fdcId,
+        foodId: m.food?.fdcId,
+        customFoodId: m.customFood?.id,
+        ingredientRecipeId: m.recipe?.id,
         quantityGrams: m.quantityGrams,
         displayQuantity: m.displayQuantity || undefined,
       }));
@@ -209,7 +233,7 @@ export function TblspImport({ onComplete, onCancel }: TblspImportProps) {
                 </label>
               </div>
 
-              <h4>Map Ingredients to USDA Foods</h4>
+              <h4>Map Ingredients to Foods</h4>
               <p className="mapping-status">
                 {mappedCount} of {mappings.length} mapped
                 {skippedCount > 0 && ` (${skippedCount} skipped)`}
@@ -243,9 +267,41 @@ export function TblspImport({ onComplete, onCancel }: TblspImportProps) {
                         <span className="food-name">{mapping.food.description}</span>
                         <PortionSelector
                           fdcId={mapping.food.fdcId}
-                          initialGrams={mapping.quantityGrams}
+                          initialValue={mapping.quantityGrams}
                           initialDisplay={mapping.displayQuantity}
-                          onChange={(grams, display) => handleUpdatePortion(index, grams, display)}
+                          onChange={(value, display) => handleUpdatePortion(index, value, display)}
+                        />
+                        <button
+                          className="change-btn"
+                          onClick={() => setActiveMappingIndex(index)}
+                        >
+                          Change
+                        </button>
+                      </div>
+                    ) : mapping.customFood ? (
+                      <div className="mapped-food">
+                        <span className="food-name">{mapping.customFood.name}</span>
+                        <PortionSelector
+                          customFoodId={mapping.customFood.id}
+                          initialValue={mapping.quantityGrams}
+                          initialDisplay={mapping.displayQuantity}
+                          onChange={(value, display) => handleUpdatePortion(index, value, display)}
+                        />
+                        <button
+                          className="change-btn"
+                          onClick={() => setActiveMappingIndex(index)}
+                        >
+                          Change
+                        </button>
+                      </div>
+                    ) : mapping.recipe ? (
+                      <div className="mapped-food">
+                        <span className="food-name">{mapping.recipe.name}</span>
+                        <PortionSelector
+                          ingredientRecipeId={mapping.recipe.id}
+                          initialValue={mapping.quantityGrams}
+                          initialDisplay={mapping.displayQuantity}
+                          onChange={(value, display) => handleUpdatePortion(index, value, display)}
                         />
                         <button
                           className="change-btn"
@@ -258,6 +314,9 @@ export function TblspImport({ onComplete, onCancel }: TblspImportProps) {
                       <div className="search-section">
                         <FoodSearch
                           onSelect={(food) => handleMapFood(index, food)}
+                          onSelectCustomFood={(customFood) => handleMapCustomFood(index, customFood)}
+                          onSelectRecipe={(recipe) => handleMapRecipe(index, recipe)}
+                          includeRecipes={true}
                           placeholder="Search for matching food..."
                         />
                         <div className="search-actions">
@@ -273,7 +332,7 @@ export function TblspImport({ onComplete, onCancel }: TblspImportProps) {
                           className="map-btn"
                           onClick={() => setActiveMappingIndex(index)}
                         >
-                          Map to USDA Food
+                          Map to Food
                         </button>
                         <button
                           className="skip-btn"
@@ -311,12 +370,17 @@ export function TblspImport({ onComplete, onCancel }: TblspImportProps) {
           <h4>Ingredients ({mappedCount})</h4>
           <ul className="review-ingredients">
             {mappings
-              .filter((m) => m.food && !m.skipped)
+              .filter((m) => (m.food || m.customFood || m.recipe) && !m.skipped)
               .map((m, i) => (
                 <li key={i}>
-                  <span className="food-name">{m.food!.description}</span>
+                  <span className="food-name">
+                    {m.food ? m.food.description : m.customFood ? m.customFood.name : m.recipe!.name}
+                  </span>
                   <span className="qty">
-                    {m.quantityGrams}g{m.displayQuantity && ` (${m.displayQuantity})`}
+                    {m.customFood || m.recipe
+                      ? `${m.quantityGrams} serving(s)${m.displayQuantity && ` (${m.displayQuantity})`}`
+                      : `${m.quantityGrams}g${m.displayQuantity && ` (${m.displayQuantity})`}`
+                    }
                   </span>
                 </li>
               ))}

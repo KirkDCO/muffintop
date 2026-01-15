@@ -39,6 +39,7 @@ export interface CustomFood {
   portions: CustomFoodPortion[];
   isShared: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface CustomFoodSummary {
@@ -48,6 +49,7 @@ export interface CustomFoodSummary {
   caloriesPerServing: number;
   isShared: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateCustomFoodPortionInput {

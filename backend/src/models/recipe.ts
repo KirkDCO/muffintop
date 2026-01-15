@@ -2,11 +2,13 @@ import { z } from 'zod';
 
 /**
  * Ingredient input for creating/updating recipes
+ * Supports USDA foods, custom foods, or other recipes as ingredients
  */
 export const createRecipeIngredientSchema = z
   .object({
     foodId: z.number().int().positive().optional(),
     customFoodId: z.number().int().positive().optional(),
+    ingredientRecipeId: z.number().int().positive().optional(),
     quantityGrams: z.number().positive('Quantity must be positive'),
     displayQuantity: z.string().optional(),
   })
@@ -14,9 +16,12 @@ export const createRecipeIngredientSchema = z
     (data) => {
       const hasFoodId = data.foodId !== undefined;
       const hasCustomFoodId = data.customFoodId !== undefined;
-      return (hasFoodId && !hasCustomFoodId) || (!hasFoodId && hasCustomFoodId);
+      const hasIngredientRecipeId = data.ingredientRecipeId !== undefined;
+      // Exactly one of the three must be provided
+      const count = [hasFoodId, hasCustomFoodId, hasIngredientRecipeId].filter(Boolean).length;
+      return count === 1;
     },
-    { message: 'Exactly one of foodId or customFoodId must be provided' }
+    { message: 'Exactly one of foodId, customFoodId, or ingredientRecipeId must be provided' }
   );
 
 /**
@@ -46,12 +51,14 @@ export const recipeQuerySchema = z.object({
 
 /**
  * Ingredient mapping for tblsp import
+ * Supports USDA foods, custom foods, or other recipes as ingredients
  */
 export const importIngredientMappingSchema = z
   .object({
     originalText: z.string(),
     foodId: z.number().int().positive().optional(),
     customFoodId: z.number().int().positive().optional(),
+    ingredientRecipeId: z.number().int().positive().optional(),
     quantityGrams: z.number().positive('Quantity must be positive'),
     displayQuantity: z.string().optional(),
   })
@@ -59,9 +66,12 @@ export const importIngredientMappingSchema = z
     (data) => {
       const hasFoodId = data.foodId !== undefined;
       const hasCustomFoodId = data.customFoodId !== undefined;
-      return (hasFoodId && !hasCustomFoodId) || (!hasFoodId && hasCustomFoodId);
+      const hasIngredientRecipeId = data.ingredientRecipeId !== undefined;
+      // Exactly one of the three must be provided
+      const count = [hasFoodId, hasCustomFoodId, hasIngredientRecipeId].filter(Boolean).length;
+      return count === 1;
     },
-    { message: 'Exactly one of foodId or customFoodId must be provided' }
+    { message: 'Exactly one of foodId, customFoodId, or ingredientRecipeId must be provided' }
   );
 
 /**

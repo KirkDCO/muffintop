@@ -62,7 +62,7 @@ export function useCreateRecipe() {
             query.queryKey.length === 3, // List queries have [recipes, userId, params]
         },
         (oldData) => {
-          if (!oldData) return { recipes: [toSummary(newRecipe)] };
+          if (!oldData?.recipes) return { recipes: [toSummary(newRecipe)] };
           return {
             recipes: [toSummary(newRecipe), ...oldData.recipes],
           };
@@ -74,13 +74,16 @@ export function useCreateRecipe() {
 
 // Helper to convert full Recipe to RecipeSummary
 function toSummary(recipe: Recipe): RecipeSummary {
+  const totalCalories = recipe.nutrients.calories ?? 0;
   return {
     id: recipe.id,
     userId: recipe.userId,
     name: recipe.name,
     servings: recipe.servings,
+    caloriesPerServing: recipe.servings > 0 ? totalCalories / recipe.servings : 0,
     isShared: recipe.isShared,
     createdAt: recipe.createdAt,
+    updatedAt: recipe.updatedAt,
   };
 }
 
@@ -102,7 +105,7 @@ export function useUpdateRecipe() {
             query.queryKey.length === 3,
         },
         (oldData) => {
-          if (!oldData) return oldData;
+          if (!oldData?.recipes) return oldData;
           return {
             recipes: oldData.recipes.map((r) =>
               r.id === updatedRecipe.id ? toSummary(updatedRecipe) : r
@@ -134,7 +137,7 @@ export function useDeleteRecipe() {
             query.queryKey.length === 3,
         },
         (oldData) => {
-          if (!oldData) return oldData;
+          if (!oldData?.recipes) return oldData;
           return {
             recipes: oldData.recipes.filter((r) => r.id !== recipeId),
           };
@@ -164,7 +167,7 @@ export function useImportTblspRecipe() {
             query.queryKey.length === 3,
         },
         (oldData) => {
-          if (!oldData) return { recipes: [toSummary(newRecipe)] };
+          if (!oldData?.recipes) return { recipes: [toSummary(newRecipe)] };
           return {
             recipes: [toSummary(newRecipe), ...oldData.recipes],
           };

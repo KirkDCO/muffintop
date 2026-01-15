@@ -1,8 +1,9 @@
 import { getDb } from '../db/connection.js';
-import { NotFoundError } from '../middleware/error-handler.js';
+import { NotFoundError, ConflictError } from '../middleware/error-handler.js';
 import {
   calculateNutrientsForFood,
   calculateNutrientsForCustomFood,
+  calculateNutrientsForRecipe,
   sumNutrients,
 } from '../utils/nutrient-calc.js';
 import {
@@ -43,11 +44,13 @@ interface RecipeIngredientRow {
   recipe_id: number;
   food_id: number | null;
   custom_food_id: number | null;
+  ingredient_recipe_id: number | null;
   quantity_grams: number;
   display_quantity: string | null;
   position: number;
   food_name: string | null;
   custom_food_name: string | null;
+  ingredient_recipe_name: string | null;
 }
 
 /**
@@ -67,9 +70,11 @@ function rowToNutrients(row: Record<string, unknown>): NutrientValues {
 
 /**
  * Calculate total nutrients from ingredients
+ * Note: For USDA foods, quantityGrams is actual grams.
+ * For custom foods and recipes, quantityGrams represents servings.
  */
 function calculateRecipeNutrients(
-  ingredients: Array<{ foodId?: number; customFoodId?: number; quantityGrams: number }>,
+  ingredients: Array<{ foodId?: number; customFoodId?: number; ingredientRecipeId?: number; quantityGrams: number }>,
   userId: number
 ): NutrientValues {
   const ingredientNutrients: NutrientValues[] = [];
@@ -80,6 +85,10 @@ function calculateRecipeNutrients(
       ingredientNutrients.push(result.nutrients);
     } else if (ing.customFoodId) {
       const result = calculateNutrientsForCustomFood(ing.customFoodId, ing.quantityGrams, userId);
+      ingredientNutrients.push(result.nutrients);
+    } else if (ing.ingredientRecipeId) {
+      // For recipe ingredients, quantityGrams represents servings of that recipe
+      const result = calculateNutrientsForRecipe(ing.ingredientRecipeId, ing.quantityGrams, userId);
       ingredientNutrients.push(result.nutrients);
     }
   }
@@ -117,7 +126,7 @@ export const recipeService = {
     if (search && search.length >= 2) {
       // Use FTS search - user's own + shared from others
       sql = `
-        SELECT r.id, r.user_id, r.name, r.servings, r.calories, r.is_shared, r.created_at
+        SELECT r.id, r.user_id, r.name, r.servings, r.calories, r.is_shared, r.created_at, r.updated_at
         FROM recipe r
         JOIN recipe_fts fts ON r.id = fts.rowid
         WHERE (r.user_id = ? OR r.is_shared = 1) AND recipe_fts MATCH ?
@@ -133,7 +142,7 @@ export const recipeService = {
     } else {
       // No search, return recent - user's own + shared from others
       sql = `
-        SELECT id, user_id, name, servings, calories, is_shared, created_at
+        SELECT id, user_id, name, servings, calories, is_shared, created_at, updated_at
         FROM recipe
         WHERE user_id = ? OR is_shared = 1
         ORDER BY updated_at DESC
@@ -150,6 +159,7 @@ export const recipeService = {
       calories: number;
       is_shared: number;
       created_at: string;
+      updated_at: string;
     }>;
 
     return rows.map((row) => ({
@@ -160,6 +170,7 @@ export const recipeService = {
       caloriesPerServing: row.servings > 0 ? Math.round(row.calories / row.servings) : 0,
       isShared: row.is_shared === 1,
       createdAt: row.created_at,
+      updatedAt: row.updated_at,
     }));
   },
 
@@ -185,13 +196,15 @@ export const recipeService = {
     // Get ingredients with food names
     const ingredients = db
       .prepare(
-        `SELECT ri.id, ri.recipe_id, ri.food_id, ri.custom_food_id,
+        `SELECT ri.id, ri.recipe_id, ri.food_id, ri.custom_food_id, ri.ingredient_recipe_id,
                 ri.quantity_grams, ri.display_quantity, ri.position,
                 f.description as food_name,
-                cf.name as custom_food_name
+                cf.name as custom_food_name,
+                ir.name as ingredient_recipe_name
          FROM recipe_ingredient ri
          LEFT JOIN food f ON ri.food_id = f.fdc_id
          LEFT JOIN custom_food cf ON ri.custom_food_id = cf.id
+         LEFT JOIN recipe ir ON ri.ingredient_recipe_id = ir.id
          WHERE ri.recipe_id = ?
          ORDER BY ri.position`
       )
@@ -207,7 +220,8 @@ export const recipeService = {
         id: ing.id,
         foodId: ing.food_id,
         customFoodId: ing.custom_food_id,
-        foodName: ing.food_name || ing.custom_food_name || 'Unknown',
+        ingredientRecipeId: ing.ingredient_recipe_id,
+        foodName: ing.food_name || ing.custom_food_name || ing.ingredient_recipe_name || 'Unknown',
         quantityGrams: ing.quantity_grams,
         displayQuantity: ing.display_quantity,
         position: ing.position,
@@ -242,8 +256,8 @@ export const recipeService = {
 
     // Insert ingredients
     const insertIngredient = db.prepare(
-      `INSERT INTO recipe_ingredient (recipe_id, food_id, custom_food_id, quantity_grams, display_quantity, position)
-       VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT INTO recipe_ingredient (recipe_id, food_id, custom_food_id, ingredient_recipe_id, quantity_grams, display_quantity, position)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
     );
 
     for (let i = 0; i < input.ingredients.length; i++) {
@@ -252,6 +266,7 @@ export const recipeService = {
         recipeId,
         ing.foodId ?? null,
         ing.customFoodId ?? null,
+        ing.ingredientRecipeId ?? null,
         ing.quantityGrams,
         ing.displayQuantity ?? null,
         i
@@ -294,8 +309,8 @@ export const recipeService = {
     db.prepare('DELETE FROM recipe_ingredient WHERE recipe_id = ?').run(recipeId);
 
     const insertIngredient = db.prepare(
-      `INSERT INTO recipe_ingredient (recipe_id, food_id, custom_food_id, quantity_grams, display_quantity, position)
-       VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT INTO recipe_ingredient (recipe_id, food_id, custom_food_id, ingredient_recipe_id, quantity_grams, display_quantity, position)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
     );
 
     for (let i = 0; i < input.ingredients.length; i++) {
@@ -304,6 +319,7 @@ export const recipeService = {
         recipeId,
         ing.foodId ?? null,
         ing.customFoodId ?? null,
+        ing.ingredientRecipeId ?? null,
         ing.quantityGrams,
         ing.displayQuantity ?? null,
         i
@@ -319,12 +335,20 @@ export const recipeService = {
   delete(userId: number, recipeId: number): void {
     const db = getDb();
 
-    const result = db
-      .prepare('DELETE FROM recipe WHERE id = ? AND user_id = ?')
-      .run(recipeId, userId);
+    try {
+      const result = db
+        .prepare('DELETE FROM recipe WHERE id = ? AND user_id = ?')
+        .run(recipeId, userId);
 
-    if (result.changes === 0) {
-      throw new NotFoundError(`Recipe with id ${recipeId} not found`);
+      if (result.changes === 0) {
+        throw new NotFoundError(`Recipe with id ${recipeId} not found`);
+      }
+    } catch (err) {
+      // Handle foreign key constraint - recipe is referenced by food log
+      if (err instanceof Error && 'code' in err && err.code === 'SQLITE_CONSTRAINT_FOREIGNKEY') {
+        throw new ConflictError('Cannot delete this recipe because it is used in your food log. Remove those entries first.');
+      }
+      throw err;
     }
   },
 
@@ -347,7 +371,7 @@ export const recipeService = {
 
     const rows = db
       .prepare(
-        `SELECT r.id, r.user_id, r.name, r.servings, r.calories, r.is_shared, r.created_at
+        `SELECT r.id, r.user_id, r.name, r.servings, r.calories, r.is_shared, r.created_at, r.updated_at
          FROM recipe r
          JOIN recipe_fts fts ON r.id = fts.rowid
          WHERE (r.user_id = ? OR r.is_shared = 1) AND recipe_fts MATCH ?
@@ -362,6 +386,7 @@ export const recipeService = {
       calories: number;
       is_shared: number;
       created_at: string;
+      updated_at: string;
     }>;
 
     return rows.map((row) => ({
@@ -372,6 +397,7 @@ export const recipeService = {
       caloriesPerServing: row.servings > 0 ? Math.round(row.calories / row.servings) : 0,
       isShared: row.is_shared === 1,
       createdAt: row.created_at,
+      updatedAt: row.updated_at,
     }));
   },
 
@@ -387,6 +413,7 @@ export const recipeService = {
       ingredients: input.ingredients.map((ing) => ({
         foodId: ing.foodId,
         customFoodId: ing.customFoodId,
+        ingredientRecipeId: ing.ingredientRecipeId,
         quantityGrams: ing.quantityGrams,
         displayQuantity: ing.displayQuantity,
       })),
@@ -411,8 +438,8 @@ export const recipeService = {
 
     // Insert ingredients
     const insertIngredient = db.prepare(
-      `INSERT INTO recipe_ingredient (recipe_id, food_id, custom_food_id, quantity_grams, display_quantity, position)
-       VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT INTO recipe_ingredient (recipe_id, food_id, custom_food_id, ingredient_recipe_id, quantity_grams, display_quantity, position)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
     );
 
     for (let i = 0; i < createInput.ingredients.length; i++) {
@@ -421,6 +448,7 @@ export const recipeService = {
         recipeId,
         ing.foodId ?? null,
         ing.customFoodId ?? null,
+        ing.ingredientRecipeId ?? null,
         ing.quantityGrams,
         ing.displayQuantity ?? null,
         i

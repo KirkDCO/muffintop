@@ -16,6 +16,17 @@ import {
 } from '@muffintop/shared/types';
 import type { CreateFoodLogInput, UpdateFoodLogInput, FoodLogQuery } from '../models/food-log.js';
 
+/**
+ * Format a date as "Modified YYYY-MM-DD" (e.g., "Modified 2026-01-10")
+ */
+function formatDateSuffix(dateStr: string): string {
+  const date = new Date(dateStr);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `Modified ${year}-${month}-${day}`;
+}
+
 // Pre-compute nutrient column names
 const NUTRIENT_DB_COLUMNS = getNutrientDbColumns();
 
@@ -82,11 +93,13 @@ export const foodLogService = {
   getByQuery(userId: number, query: FoodLogQuery): FoodLogEntry[] {
     const db = getDb();
 
+    // Use logged_food_name when available (stores snapshot name with date suffix),
+    // falling back to joined names for older entries without logged_food_name
     let sql = `
       SELECT fl.id, fl.user_id, fl.food_id, fl.custom_food_id, fl.recipe_id,
              fl.log_date, fl.meal_category, fl.portion_amount, fl.portion_grams,
              fl.created_at, ${FL_NUTRIENT_COLUMNS_SQL},
-             COALESCE(f.description, cf.name, r.name) as food_name
+             COALESCE(fl.logged_food_name, f.description, cf.name, r.name) as food_name
       FROM food_log fl
       LEFT JOIN food f ON fl.food_id = f.fdc_id
       LEFT JOIN custom_food cf ON fl.custom_food_id = cf.id
@@ -117,7 +130,7 @@ export const foodLogService = {
         `SELECT fl.id, fl.user_id, fl.food_id, fl.custom_food_id, fl.recipe_id,
                 fl.log_date, fl.meal_category, fl.portion_amount, fl.portion_grams,
                 fl.created_at, ${FL_NUTRIENT_COLUMNS_SQL},
-                COALESCE(f.description, cf.name, r.name) as food_name
+                COALESCE(fl.logged_food_name, f.description, cf.name, r.name) as food_name
          FROM food_log fl
          LEFT JOIN food f ON fl.food_id = f.fdc_id
          LEFT JOIN custom_food cf ON fl.custom_food_id = cf.id
@@ -136,18 +149,36 @@ export const foodLogService = {
   create(userId: number, input: CreateFoodLogInput): FoodLogEntry {
     const db = getDb();
 
-    // Calculate nutrients based on food source
+    // Calculate nutrients based on food source and get the name for logging
     let nutrients: NutrientValues;
+    let loggedFoodName: string;
 
     if (input.foodId) {
       const result = calculateNutrientsForFood(input.foodId, input.portionGrams);
       nutrients = result.nutrients;
+      // For USDA foods, just use the description (no date suffix - they don't change)
+      const foodRow = db
+        .prepare('SELECT description FROM food WHERE fdc_id = ?')
+        .get(input.foodId) as { description: string } | undefined;
+      loggedFoodName = foodRow?.description || 'Unknown Food';
     } else if (input.customFoodId) {
       const result = calculateNutrientsForCustomFood(input.customFoodId, input.portionGrams, userId);
       nutrients = result.nutrients;
+      // For custom foods, include date suffix to indicate version
+      const customFoodRow = db
+        .prepare('SELECT name FROM custom_food WHERE id = ?')
+        .get(input.customFoodId) as { name: string } | undefined;
+      const dateSuffix = formatDateSuffix(input.logDate);
+      loggedFoodName = customFoodRow ? `${customFoodRow.name} (${dateSuffix})` : 'Unknown Custom Food';
     } else if (input.recipeId) {
       const result = calculateNutrientsForRecipe(input.recipeId, input.portionGrams, userId);
       nutrients = result.nutrients;
+      // For recipes, include date suffix to indicate version
+      const recipeRow = db
+        .prepare('SELECT name FROM recipe WHERE id = ?')
+        .get(input.recipeId) as { name: string } | undefined;
+      const dateSuffix = formatDateSuffix(input.logDate);
+      loggedFoodName = recipeRow ? `${recipeRow.name} (${dateSuffix})` : 'Unknown Recipe';
     } else {
       throw new ValidationError('One of foodId, customFoodId, or recipeId is required');
     }
@@ -159,8 +190,8 @@ export const foodLogService = {
         `INSERT INTO food_log (
           user_id, food_id, custom_food_id, recipe_id,
           log_date, meal_category, portion_amount, portion_grams,
-          ${nutrientColumns}
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ${nutrientPlaceholders})`
+          logged_food_name, ${nutrientColumns}
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ${nutrientPlaceholders})`
       )
       .run(
         userId,
@@ -171,6 +202,7 @@ export const foodLogService = {
         input.mealCategory,
         input.portionAmount,
         input.portionGrams,
+        loggedFoodName,
         ...nutrientsToParams(nutrients)
       );
 

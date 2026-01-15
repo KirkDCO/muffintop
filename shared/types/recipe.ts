@@ -9,6 +9,7 @@ export interface RecipeIngredient {
   id: number;
   foodId: number | null;
   customFoodId: number | null;
+  ingredientRecipeId: number | null;
   foodName: string;
   quantityGrams: number;
   displayQuantity: string | null;
@@ -23,6 +24,7 @@ export interface RecipeSummary {
   caloriesPerServing: number;
   isShared: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface Recipe {
@@ -41,6 +43,7 @@ export interface Recipe {
 export interface CreateRecipeIngredientInput {
   foodId?: number;
   customFoodId?: number;
+  ingredientRecipeId?: number;
   quantityGrams: number;
   displayQuantity?: string;
 }
@@ -78,6 +81,7 @@ export interface ImportIngredientMapping {
   originalText: string;
   foodId?: number;
   customFoodId?: number;
+  ingredientRecipeId?: number;
   quantityGrams: number;
   displayQuantity?: string;
 }
