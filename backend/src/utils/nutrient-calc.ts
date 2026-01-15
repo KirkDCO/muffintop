@@ -1,4 +1,5 @@
 import { getDb } from '../db/connection.js';
+import { getUsdaDb } from '../db/usda-connection.js';
 import {
   NUTRIENT_REGISTRY,
   ALL_NUTRIENT_KEYS,
@@ -10,6 +11,14 @@ import {
 
 // Pre-compute the nutrient columns SQL for queries
 const NUTRIENT_COLUMNS_SQL = getNutrientColumnsSql();
+
+/**
+ * Get the database to use for food queries
+ * Prefers USDA database if available, falls back to main db
+ */
+function getFoodDb() {
+  return getUsdaDb() || getDb();
+}
 
 export interface FoodNutrientResult {
   nutrients: NutrientValues;
@@ -76,7 +85,7 @@ export function calculateNutrientsForFood(
   fdcId: number,
   portionGrams: number
 ): FoodNutrientResult {
-  const db = getDb();
+  const db = getFoodDb();
 
   const food = db
     .prepare(
@@ -176,7 +185,7 @@ export function calculateNutrientsForRecipe(
  * Get nutrient values for a food without scaling (per 100g)
  */
 export function getFoodBaseNutrients(fdcId: number): NutrientValues {
-  const db = getDb();
+  const db = getFoodDb();
 
   const food = db
     .prepare(

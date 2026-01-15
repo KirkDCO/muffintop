@@ -156,11 +156,8 @@ export const foodLogService = {
     if (input.foodId) {
       const result = calculateNutrientsForFood(input.foodId, input.portionGrams);
       nutrients = result.nutrients;
-      // For USDA foods, just use the description (no date suffix - they don't change)
-      const foodRow = db
-        .prepare('SELECT description FROM food WHERE fdc_id = ?')
-        .get(input.foodId) as { description: string } | undefined;
-      loggedFoodName = foodRow?.description || 'Unknown Food';
+      // Use the food name from the nutrient calculation (works for both main and USDA db)
+      loggedFoodName = result.foodName;
     } else if (input.customFoodId) {
       const result = calculateNutrientsForCustomFood(input.customFoodId, input.portionGrams, userId);
       nutrients = result.nutrients;

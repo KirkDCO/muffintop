@@ -75,9 +75,13 @@ After=network.target
 
 [Service]
 Type=simple
-User=www-data
+User=your-user
 WorkingDirectory=/opt/muffintop
-EnvironmentFile=/opt/muffintop/.env
+Environment=PORT=3002
+Environment=CORS_ORIGIN=*
+Environment=NODE_ENV=production
+Environment=DATABASE_PATH=/opt/muffintop/backend/db/muffintop.db
+Environment=USDA_DATABASE_PATH=/opt/muffintop/backend/db/usda/fooddata.db
 ExecStart=/usr/bin/node backend/dist/index.js
 Restart=on-failure
 RestartSec=10
@@ -85,6 +89,8 @@ RestartSec=10
 [Install]
 WantedBy=multi-user.target
 ```
+
+**Note**: Use absolute paths for `DATABASE_PATH` and `USDA_DATABASE_PATH` to avoid path resolution issues. Alternatively, use `EnvironmentFile=/opt/muffintop/.env` instead of inline `Environment=` directives (may require SELinux configuration on some systems).
 
 Enable and start:
 
@@ -199,8 +205,11 @@ sqlite3 backend/db/muffintop.db ".backup 'backup/muffintop.db'"
 | `PORT` | `3002` | Server port |
 | `NODE_ENV` | `development` | Environment (`production` for optimizations) |
 | `CORS_ORIGIN` | `http://localhost:5173` | Allowed CORS origin |
-| `USDA_DATABASE_PATH` | `backend/db/usda/fooddata.db` | Path to USDA food database |
+| `DATABASE_PATH` | `./db/muffintop.db` | Path to main SQLite database (use absolute path in production) |
+| `USDA_DATABASE_PATH` | `backend/db/usda/fooddata.db` | Path to USDA food database (use absolute path in production) |
 | `TBLSP_DATABASE_PATH` | (none) | Path to tblsp database for recipe import |
+
+**Important**: In production, use absolute paths for database variables to avoid path resolution issues when running as a systemd service.
 
 ---
 
