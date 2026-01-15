@@ -77,11 +77,10 @@ After=network.target
 Type=simple
 User=www-data
 WorkingDirectory=/opt/muffintop
+EnvironmentFile=/opt/muffintop/.env
 ExecStart=/usr/bin/node backend/dist/index.js
 Restart=on-failure
 RestartSec=10
-Environment=NODE_ENV=production
-Environment=PORT=3002
 
 [Install]
 WantedBy=multi-user.target
@@ -201,7 +200,7 @@ sqlite3 backend/db/muffintop.db ".backup 'backup/muffintop.db'"
 | `NODE_ENV` | `development` | Environment (`production` for optimizations) |
 | `CORS_ORIGIN` | `http://localhost:5173` | Allowed CORS origin |
 | `USDA_DATABASE_PATH` | `backend/db/usda/fooddata.db` | Path to USDA food database |
-| `TBLSP_DB_PATH` | (none) | Path to tblsp database for recipe import |
+| `TBLSP_DATABASE_PATH` | (none) | Path to tblsp database for recipe import |
 
 ---
 
