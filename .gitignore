@@ -55,3 +55,6 @@ test-results/
 # TypeScript cache
 *.tsbuildinfo
 backend/:memory:
+
+# Services
+muffintop.service
