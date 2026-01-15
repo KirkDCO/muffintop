@@ -2,11 +2,18 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../providers/UserProvider';
 import { useUsers, useCreateUser, useDeleteUser } from '../hooks/useUsers';
+import { useCreateTargetsForUser } from '../hooks/useTargets';
 import { UserSelector } from '../components/UserSelector';
 import { NutrientPreferencesEditor } from '../components/NutrientPreferencesEditor';
-import { DEFAULT_VISIBLE_NUTRIENTS, type User, type NutrientKey } from '@muffintop/shared/types';
+import { TargetSetup } from '../components/TargetSetup';
+import {
+  DEFAULT_VISIBLE_NUTRIENTS,
+  type User,
+  type NutrientKey,
+  type NutrientTarget,
+} from '@muffintop/shared/types';
 
-type CreateStep = 'name' | 'nutrients';
+type CreateStep = 'name' | 'nutrients' | 'targets';
 
 export function SelectUser() {
   const navigate = useNavigate();
@@ -14,6 +21,7 @@ export function SelectUser() {
   const { data, isLoading, error } = useUsers();
   const createUser = useCreateUser();
   const deleteUser = useDeleteUser();
+  const createTargets = useCreateTargetsForUser();
 
   const [newUserName, setNewUserName] = useState('');
   const [showCreate, setShowCreate] = useState(false);
@@ -21,6 +29,10 @@ export function SelectUser() {
   const [selectedNutrients, setSelectedNutrients] = useState<NutrientKey[]>([
     ...DEFAULT_VISIBLE_NUTRIENTS,
   ]);
+  const [basalCalories, setBasalCalories] = useState(2000);
+  const [nutrientTargets, setNutrientTargets] = useState<
+    Partial<Record<NutrientKey, NutrientTarget>>
+  >({});
 
   const handleSelectUser = (user: User) => {
     setCurrentUser(user);
@@ -33,18 +45,38 @@ export function SelectUser() {
     setCreateStep('nutrients');
   };
 
+  const handleNutrientsSubmit = () => {
+    setCreateStep('targets');
+  };
+
   const handleCreateUser = async () => {
     if (!newUserName.trim()) return;
 
     try {
+      // Create the user first
       const user = await createUser.mutateAsync({
         name: newUserName.trim(),
         visibleNutrients: selectedNutrients,
       });
+
+      // Create targets for the new user
+      await createTargets.mutateAsync({
+        userId: user.id,
+        input: {
+          basalCalories,
+          nutrientTargets,
+        },
+      });
+
+      // Reset form state
       setNewUserName('');
       setShowCreate(false);
       setCreateStep('name');
       setSelectedNutrients([...DEFAULT_VISIBLE_NUTRIENTS]);
+      setBasalCalories(2000);
+      setNutrientTargets({});
+
+      // Navigate to dashboard
       handleSelectUser(user);
     } catch (err) {
       console.error('Failed to create user:', err);
@@ -56,6 +88,8 @@ export function SelectUser() {
     setCreateStep('name');
     setNewUserName('');
     setSelectedNutrients([...DEFAULT_VISIBLE_NUTRIENTS]);
+    setBasalCalories(2000);
+    setNutrientTargets({});
   };
 
   const handleDeleteUser = async (userId: number) => {
@@ -65,6 +99,8 @@ export function SelectUser() {
       console.error('Failed to delete user:', err);
     }
   };
+
+  const isPending = createUser.isPending || createTargets.isPending;
 
   if (isLoading) {
     return <div className="loading">Loading users...</div>;
@@ -85,7 +121,7 @@ export function SelectUser() {
 
       {showCreate ? (
         <div className="create-flow">
-          {createStep === 'name' ? (
+          {createStep === 'name' && (
             <form onSubmit={handleNameSubmit} className="create-form">
               <h3>Create New User</h3>
               <input
@@ -105,7 +141,9 @@ export function SelectUser() {
                 </button>
               </div>
             </form>
-          ) : (
+          )}
+
+          {createStep === 'nutrients' && (
             <div className="create-form">
               <h3>Welcome, {newUserName}!</h3>
               <p className="step-description">
@@ -114,28 +152,63 @@ export function SelectUser() {
               <NutrientPreferencesEditor
                 selectedNutrients={selectedNutrients}
                 onChange={setSelectedNutrients}
-                disabled={createUser.isPending}
+                disabled={isPending}
               />
               <div className="form-actions">
                 <button type="button" onClick={() => setCreateStep('name')}>
                   Back
                 </button>
-                <button
-                  type="button"
-                  onClick={handleCreateUser}
-                  disabled={createUser.isPending}
-                  className="primary"
-                >
-                  {createUser.isPending ? 'Creating...' : 'Create Account'}
+                <button type="button" onClick={handleNutrientsSubmit} className="primary">
+                  Next
                 </button>
               </div>
             </div>
           )}
-          {createUser.error && (
+
+          {createStep === 'targets' && (
+            <div className="create-form">
+              <h3>Set Your Targets</h3>
+              <p className="step-description">
+                Set your daily calorie budget and nutrient targets. Activity calories will be added
+                to your budget each day.
+              </p>
+              <TargetSetup
+                selectedNutrients={selectedNutrients}
+                basalCalories={basalCalories}
+                nutrientTargets={nutrientTargets}
+                onBasalChange={setBasalCalories}
+                onTargetsChange={setNutrientTargets}
+                disabled={isPending}
+              />
+              <div className="form-actions">
+                <button type="button" onClick={() => setCreateStep('nutrients')}>
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCreateUser}
+                  disabled={isPending || basalCalories < 500}
+                  className="primary"
+                >
+                  {isPending ? 'Creating...' : 'Create Account'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {(createUser.error || createTargets.error) && (
             <p className="error-message">
-              {(createUser.error as Error).message || 'Failed to create user'}
+              {(createUser.error as Error)?.message ||
+                (createTargets.error as Error)?.message ||
+                'Failed to create user'}
             </p>
           )}
+
+          <div className="step-indicator">
+            <span className={createStep === 'name' ? 'active' : ''}>1. Name</span>
+            <span className={createStep === 'nutrients' ? 'active' : ''}>2. Nutrients</span>
+            <span className={createStep === 'targets' ? 'active' : ''}>3. Targets</span>
+          </div>
         </div>
       ) : (
         <button className="add-user-button" onClick={() => setShowCreate(true)}>
@@ -218,6 +291,22 @@ export function SelectUser() {
         .loading, .error {
           padding: 2rem;
           text-align: center;
+        }
+        .step-indicator {
+          display: flex;
+          justify-content: center;
+          gap: 1.5rem;
+          margin-top: 1.5rem;
+          padding-top: 1rem;
+          border-top: 1px solid #333;
+        }
+        .step-indicator span {
+          color: #666;
+          font-size: 0.85rem;
+        }
+        .step-indicator span.active {
+          color: #646cff;
+          font-weight: 500;
         }
       `}</style>
     </div>

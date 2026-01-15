@@ -48,6 +48,7 @@ export function useCreateFoodLog() {
       api.post<FoodLogEntry>(`/users/${currentUser!.id}/food-log`, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['food-log', currentUser?.id] });
+      queryClient.invalidateQueries({ queryKey: ['dailyStats', currentUser?.id] });
     },
   });
 }
@@ -61,6 +62,7 @@ export function useUpdateFoodLog() {
       api.put<FoodLogEntry>(`/users/${currentUser!.id}/food-log/${entryId}`, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['food-log', currentUser?.id] });
+      queryClient.invalidateQueries({ queryKey: ['dailyStats', currentUser?.id] });
     },
   });
 }
@@ -74,6 +76,7 @@ export function useDeleteFoodLog() {
       api.delete(`/users/${currentUser!.id}/food-log/${entryId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['food-log', currentUser?.id] });
+      queryClient.invalidateQueries({ queryKey: ['dailyStats', currentUser?.id] });
     },
   });
 }

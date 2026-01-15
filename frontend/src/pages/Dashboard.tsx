@@ -1,10 +1,15 @@
 import { useState } from 'react';
 import { useUser } from '../providers/UserProvider';
 import { useFoodLog, useRecentFoods, useCreateFoodLog, useDeleteFoodLog } from '../hooks/useFoodLog';
+import { useTargets } from '../hooks/useTargets';
+import { useActivity } from '../hooks/useActivity';
 import { DailySummary } from '../components/DailySummary';
+import { DailyChart } from '../components/DailyChart';
+import { TrendChart } from '../components/TrendChart';
 import { FoodLogEntry } from '../components/FoodLogEntry';
 import { RecentFoods } from '../components/RecentFoods';
 import { LogFoodModal } from '../components/LogFoodModal';
+import { ActivityInput } from '../components/ActivityInput';
 import type { CreateFoodLogInput, MealCategory } from '@muffintop/shared/types';
 
 function getToday(): string {
@@ -19,6 +24,8 @@ export function Dashboard() {
 
   const { data: foodLogData, isLoading: loadingLog } = useFoodLog(selectedDate);
   const { data: recentData } = useRecentFoods();
+  const { data: targetData } = useTargets();
+  const { data: activityData } = useActivity(selectedDate);
   const createFoodLog = useCreateFoodLog();
   const deleteFoodLog = useDeleteFoodLog();
 
@@ -41,6 +48,8 @@ export function Dashboard() {
 
   const entries = foodLogData?.entries || [];
   const recentFoods = recentData?.recentFoods || [];
+  const target = targetData?.target;
+  const activityCalories = activityData?.entries?.[0]?.activityCalories || 0;
 
   // Group entries by meal
   const mealOrder: MealCategory[] = ['breakfast', 'lunch', 'dinner', 'snack'];
@@ -81,7 +90,19 @@ export function Dashboard() {
         </div>
       </div>
 
-      <DailySummary entries={entries} date={selectedDate} />
+      {/* Activity input - shows if targets are set */}
+      {target && <ActivityInput date={selectedDate} basalCalories={target.basalCalories} />}
+
+      <DailySummary
+        entries={entries}
+        date={selectedDate}
+        target={target}
+        activityCalories={activityCalories}
+      />
+
+      <DailyChart target={target} />
+
+      <TrendChart target={target} />
 
       {recentFoods.length > 0 && (
         <RecentFoods

@@ -23,16 +23,45 @@ export interface FoodDetail extends FoodSummary {
   portions: FoodPortion[];
 }
 
+export interface CustomFoodPortion {
+  id: number;
+  description: string;
+  servingMultiplier: number;
+  gramWeight: number | null;
+}
+
 export interface CustomFood {
   id: number;
+  userId: number;
   name: string;
-  nutrients: NutrientValues;
+  servingGrams: number | null;
+  nutrients: NutrientValues;  // Per 1 serving
+  portions: CustomFoodPortion[];
+  isShared: boolean;
   createdAt: string;
+}
+
+export interface CustomFoodSummary {
+  id: number;
+  userId: number;
+  name: string;
+  caloriesPerServing: number;
+  isShared: boolean;
+  createdAt: string;
+}
+
+export interface CreateCustomFoodPortionInput {
+  description: string;
+  servingMultiplier: number;
+  gramWeight?: number;
 }
 
 export interface CreateCustomFoodInput {
   name: string;
-  nutrients: NutrientValues;
+  servingGrams?: number;
+  nutrients: Partial<NutrientValues>;  // Only big 4 required
+  portions?: CreateCustomFoodPortionInput[];
+  isShared?: boolean;
 }
 
 export interface FoodSearchParams {
@@ -43,5 +72,15 @@ export interface FoodSearchParams {
 
 export interface FoodSearchResult {
   foods: FoodSummary[];
+  total: number;
+}
+
+export interface CustomFoodQueryParams {
+  search?: string;
+  limit?: number;
+}
+
+export interface CustomFoodListResult {
+  customFoods: CustomFoodSummary[];
   total: number;
 }

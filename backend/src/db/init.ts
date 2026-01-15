@@ -10,8 +10,16 @@ const __dirname = path.dirname(__filename);
 export function initializeDatabase(reset = false): void {
   const db = getDb();
 
+  // Check if this is a fresh database (no tables exist yet)
+  const tableCheck = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='user'")
+    .get();
+  const isFreshDatabase = !tableCheck;
+
   if (reset) {
     console.log('Resetting database...');
+    // Disable foreign keys for drop operations
+    db.pragma('foreign_keys = OFF');
     // Drop all tables in reverse dependency order
     db.exec(`
       DROP TABLE IF EXISTS _migrations;
@@ -20,14 +28,19 @@ export function initializeDatabase(reset = false): void {
       DROP TABLE IF EXISTS activity_log;
       DROP TABLE IF EXISTS daily_target;
       DROP TABLE IF EXISTS recipe_ingredient;
+      DROP TABLE IF EXISTS recipe_fts;
       DROP TABLE IF EXISTS recipe;
       DROP TABLE IF EXISTS food_log;
+      DROP TABLE IF EXISTS custom_food_portion;
+      DROP TABLE IF EXISTS custom_food_fts;
       DROP TABLE IF EXISTS custom_food;
       DROP TABLE IF EXISTS food_portion;
       DROP TABLE IF EXISTS food_fts;
       DROP TABLE IF EXISTS food;
       DROP TABLE IF EXISTS user;
     `);
+    // Re-enable foreign keys
+    db.pragma('foreign_keys = ON');
   }
 
   // Read and execute schema
@@ -39,7 +52,7 @@ export function initializeDatabase(reset = false): void {
   console.log('Database schema initialized successfully.');
 
   // Handle migrations
-  if (reset) {
+  if (reset || isFreshDatabase) {
     // Fresh schema is already at latest version, just mark migrations as applied
     console.log('Marking migrations as applied (fresh schema is current)...');
     markAllMigrationsApplied();

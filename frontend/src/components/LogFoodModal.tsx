@@ -1,7 +1,15 @@
 import { useState } from 'react';
 import { FoodSearch } from './FoodSearch';
 import { FoodDetail } from './FoodDetail';
-import type { FoodSummary, MealCategory, CreateFoodLogInput } from '@muffintop/shared/types';
+import { RecipeDetail } from './RecipeDetail';
+import { CustomFoodDetail } from './CustomFoodDetail';
+import type { FoodSummary, RecipeSummary, CustomFoodSummary, MealCategory, CreateFoodLogInput } from '@muffintop/shared/types';
+
+type SelectedItem =
+  | { type: 'food'; data: FoodSummary }
+  | { type: 'recipe'; data: RecipeSummary }
+  | { type: 'customFood'; data: CustomFoodSummary }
+  | null;
 
 interface LogFoodModalProps {
   date: string;
@@ -10,19 +18,59 @@ interface LogFoodModalProps {
 }
 
 export function LogFoodModal({ date, onLog, onClose }: LogFoodModalProps) {
-  const [selectedFood, setSelectedFood] = useState<FoodSummary | null>(null);
+  const [selectedItem, setSelectedItem] = useState<SelectedItem>(null);
   const [mealCategory, setMealCategory] = useState<MealCategory>('lunch');
 
-  const handleLog = (portionGrams: number, portionAmount: number) => {
-    if (!selectedFood) return;
+  const handleLogFood = (portionGrams: number, portionAmount: number) => {
+    if (selectedItem?.type !== 'food') return;
 
     onLog({
       logDate: date,
       mealCategory,
-      foodId: selectedFood.fdcId,
+      foodId: selectedItem.data.fdcId,
       portionAmount,
       portionGrams,
     });
+  };
+
+  const handleLogRecipe = (servings: number) => {
+    if (selectedItem?.type !== 'recipe') return;
+
+    onLog({
+      logDate: date,
+      mealCategory,
+      recipeId: selectedItem.data.id,
+      portionAmount: servings,
+      portionGrams: servings, // portionGrams stores servings for recipes
+    });
+  };
+
+  const handleLogCustomFood = (servings: number) => {
+    if (selectedItem?.type !== 'customFood') return;
+
+    onLog({
+      logDate: date,
+      mealCategory,
+      customFoodId: selectedItem.data.id,
+      portionAmount: servings,
+      portionGrams: servings, // portionGrams stores servings for custom foods
+    });
+  };
+
+  const handleSelectFood = (food: FoodSummary) => {
+    setSelectedItem({ type: 'food', data: food });
+  };
+
+  const handleSelectRecipe = (recipe: RecipeSummary) => {
+    setSelectedItem({ type: 'recipe', data: recipe });
+  };
+
+  const handleSelectCustomFood = (customFood: CustomFoodSummary) => {
+    setSelectedItem({ type: 'customFood', data: customFood });
+  };
+
+  const handleClearSelection = () => {
+    setSelectedItem(null);
   };
 
   return (
@@ -49,14 +97,31 @@ export function LogFoodModal({ date, onLog, onClose }: LogFoodModalProps) {
         </div>
 
         <div className="modal-body">
-          {selectedFood ? (
+          {selectedItem?.type === 'food' ? (
             <FoodDetail
-              fdcId={selectedFood.fdcId}
-              onLog={handleLog}
-              onClose={() => setSelectedFood(null)}
+              fdcId={selectedItem.data.fdcId}
+              onLog={handleLogFood}
+              onClose={handleClearSelection}
+            />
+          ) : selectedItem?.type === 'recipe' ? (
+            <RecipeDetail
+              recipeId={selectedItem.data.id}
+              onLog={handleLogRecipe}
+              onClose={handleClearSelection}
+            />
+          ) : selectedItem?.type === 'customFood' ? (
+            <CustomFoodDetail
+              customFoodId={selectedItem.data.id}
+              onLog={handleLogCustomFood}
+              onClose={handleClearSelection}
             />
           ) : (
-            <FoodSearch onSelect={setSelectedFood} placeholder="Search for a food to log..." />
+            <FoodSearch
+              onSelect={handleSelectFood}
+              onSelectRecipe={handleSelectRecipe}
+              onSelectCustomFood={handleSelectCustomFood}
+              placeholder="Search for a food, recipe, or custom food to log..."
+            />
           )}
         </div>
       </div>

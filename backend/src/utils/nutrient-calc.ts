@@ -100,18 +100,22 @@ export function calculateNutrientsForFood(
 
 /**
  * Calculate nutrients for a custom food
+ * Note: Custom food nutrients are stored per 1 serving.
+ * The servingsConsumed parameter is the number of servings eaten.
+ * Accessible if user owns it OR if it's shared.
  */
 export function calculateNutrientsForCustomFood(
   customFoodId: number,
-  portionGrams: number,
+  servingsConsumed: number,
   userId: number
 ): FoodNutrientResult {
   const db = getDb();
 
+  // Accessible if owner OR shared
   const food = db
     .prepare(
       `SELECT name, ${NUTRIENT_COLUMNS_SQL}
-       FROM custom_food WHERE id = ? AND user_id = ?`
+       FROM custom_food WHERE id = ? AND (user_id = ? OR is_shared = 1)`
     )
     .get(customFoodId, userId) as Record<string, unknown> | undefined;
 
@@ -120,7 +124,8 @@ export function calculateNutrientsForCustomFood(
   }
 
   const baseNutrients = rowToNutrients(food);
-  const factor = portionGrams / 100;
+  // Nutrients are per 1 serving, scale by servings consumed
+  const factor = servingsConsumed;
 
   return {
     nutrients: scaleNutrients(baseNutrients, factor),
@@ -130,19 +135,24 @@ export function calculateNutrientsForCustomFood(
 
 /**
  * Calculate nutrients for a recipe
- * Note: Recipe nutrients are stored as totals for the entire recipe
+ * Note: Recipe nutrients are stored as totals for the entire recipe.
+ * The servingsConsumed parameter represents servings consumed.
+ * For example, if a recipe has 4 servings and user eats 1.5 servings,
+ * servingsConsumed = 1.5 and we return 1.5/4 = 37.5% of total nutrients.
+ * Accessible if user owns it OR if it's shared.
  */
 export function calculateNutrientsForRecipe(
   recipeId: number,
-  portionGrams: number,
+  servingsConsumed: number,
   userId: number
 ): FoodNutrientResult {
   const db = getDb();
 
+  // Accessible if owner OR shared
   const recipe = db
     .prepare(
       `SELECT name, servings, ${NUTRIENT_COLUMNS_SQL}
-       FROM recipe WHERE id = ? AND user_id = ?`
+       FROM recipe WHERE id = ? AND (user_id = ? OR is_shared = 1)`
     )
     .get(recipeId, userId) as Record<string, unknown> | undefined;
 
@@ -150,13 +160,14 @@ export function calculateNutrientsForRecipe(
     throw new Error(`Recipe with id ${recipeId} not found`);
   }
 
-  // Recipe nutrients are stored as totals
-  // portionGrams represents the amount consumed
-  // A more sophisticated approach would track total recipe weight
-  const nutrients = rowToNutrients(recipe);
+  const totalNutrients = rowToNutrients(recipe);
+  const totalServings = recipe.servings as number;
+
+  // Scale nutrients by (servingsConsumed / totalServings)
+  const factor = servingsConsumed / totalServings;
 
   return {
-    nutrients,
+    nutrients: scaleNutrients(totalNutrients, factor),
     foodName: recipe.name as string,
   };
 }

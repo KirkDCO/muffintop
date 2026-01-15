@@ -1,7 +1,7 @@
 # Quickstart Guide: MuffinTop Calorie Tracker
 
-**Date**: 2026-01-13
-**Phase**: 1 - Design
+**Date**: 2026-01-14
+**Phase**: Complete - All user stories implemented
 
 ## Prerequisites
 
@@ -10,7 +10,22 @@
 - ~4GB disk space (for USDA data)
 - Access to tblsp database (optional, for recipe import)
 
-## Project Setup
+## Quick Setup (Recommended)
+
+```bash
+# Clone repository (if not already done)
+cd ~/Projects/muffintop
+
+# One-command setup: install deps, init DB, import USDA, build
+npm run setup
+
+# Start development servers
+npm run dev
+```
+
+Access the application at: `http://localhost:5173`
+
+## Manual Project Setup
 
 ### 1. Clone and Install Dependencies
 
@@ -18,14 +33,8 @@
 # Clone repository (if not already done)
 cd ~/Projects/muffintop
 
-# Install backend dependencies
-cd backend && npm install
-
-# Install frontend dependencies
-cd ../frontend && npm install
-
-# Install shared types
-cd ../shared && npm install
+# Install all workspace dependencies
+npm install
 ```
 
 ### 2. Environment Configuration
@@ -147,14 +156,27 @@ Base URL: `http://localhost:3002/api/v1`
 |--------|----------|-------------|
 | GET | `/users` | List all users |
 | POST | `/users` | Create user |
+| DELETE | `/users/:id` | Delete user |
 | GET | `/foods/search?q=` | Search foods |
 | GET | `/foods/:fdcId` | Food details |
 | GET | `/users/:id/food-log` | Get food log |
 | POST | `/users/:id/food-log` | Log food |
+| PUT | `/users/:id/food-log/:entryId` | Update log entry |
+| DELETE | `/users/:id/food-log/:entryId` | Delete log entry |
 | GET | `/users/:id/recipes` | List recipes |
 | POST | `/users/:id/recipes` | Create recipe |
-| GET | `/users/:id/stats/daily?date=` | Daily summary |
-| GET | `/users/:id/stats/trends` | Trend data |
+| PUT | `/users/:id/recipes/:recipeId` | Update recipe |
+| DELETE | `/users/:id/recipes/:recipeId` | Delete recipe |
+| GET | `/users/:id/custom-foods` | List custom foods |
+| POST | `/users/:id/custom-foods` | Create custom food |
+| GET | `/users/:id/targets` | Get nutrient targets |
+| PUT | `/users/:id/targets` | Update targets |
+| GET | `/users/:id/activity` | Get activity log |
+| POST | `/users/:id/activity` | Log activity calories |
+| GET | `/users/:id/metrics/weight` | Get weight history |
+| POST | `/users/:id/metrics/weight` | Log weight |
+| GET | `/users/:id/stats/daily` | Daily nutrient summary |
+| GET | `/users/:id/stats/trends` | Longitudinal trend data |
 
 See `specs/001-calorie-tracker-mvp/contracts/api-v1.yaml` for full OpenAPI spec.
 

@@ -17,19 +17,23 @@ export interface RecipeIngredient {
 
 export interface RecipeSummary {
   id: number;
+  userId: number;
   name: string;
   servings: number;
   caloriesPerServing: number;
+  isShared: boolean;
   createdAt: string;
 }
 
 export interface Recipe {
   id: number;
+  userId: number;
   name: string;
   servings: number;
   nutrients: NutrientValues;
   ingredients: RecipeIngredient[];
   tblspRecipeId: number | null;
+  isShared: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -44,6 +48,7 @@ export interface CreateRecipeIngredientInput {
 export interface CreateRecipeInput {
   name: string;
   servings: number;
+  isShared?: boolean;
   ingredients: CreateRecipeIngredientInput[];
 }
 

@@ -2,15 +2,16 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../../src/app.js';
 import { initializeDatabase } from '../../src/db/init.js';
-import { closeDb, getDb } from '../../src/db/connection.js';
+import { closeDb, getDb, resetDb } from '../../src/db/connection.js';
 import type { Express } from 'express';
 
 describe('Foods API', () => {
   let app: Express;
 
   beforeAll(() => {
+    resetDb();
     process.env.DATABASE_PATH = ':memory:';
-    initializeDatabase();
+    initializeDatabase(true);
     app = createApp();
   });
 

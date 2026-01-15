@@ -82,12 +82,12 @@ CREATE TABLE IF NOT EXISTS custom_food (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
-  -- Nutrients (per 100g)
+  -- Nutrients (per 1 serving, not per 100g)
   calories REAL NOT NULL,
   protein REAL NOT NULL,
   carbs REAL NOT NULL,
   fiber REAL NOT NULL DEFAULT 0,
-  added_sugar REAL NOT NULL,
+  added_sugar REAL NOT NULL DEFAULT 0,
   total_sugar REAL NOT NULL DEFAULT 0,
   total_fat REAL NOT NULL DEFAULT 0,
   saturated_fat REAL NOT NULL DEFAULT 0,
@@ -100,10 +100,46 @@ CREATE TABLE IF NOT EXISTS custom_food (
   vitamin_a REAL NOT NULL DEFAULT 0,
   vitamin_c REAL NOT NULL DEFAULT 0,
   vitamin_d REAL NOT NULL DEFAULT 0,
+  serving_grams REAL,
+  is_shared INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_custom_food_user ON custom_food(user_id);
+CREATE INDEX IF NOT EXISTS idx_custom_food_is_shared ON custom_food(is_shared);
+
+-- Custom food portions table
+CREATE TABLE IF NOT EXISTS custom_food_portion (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  custom_food_id INTEGER NOT NULL REFERENCES custom_food(id) ON DELETE CASCADE,
+  description TEXT NOT NULL,
+  serving_multiplier REAL NOT NULL DEFAULT 1,
+  gram_weight REAL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_custom_food_portion_food ON custom_food_portion(custom_food_id);
+
+-- FTS5 index for custom food search
+CREATE VIRTUAL TABLE IF NOT EXISTS custom_food_fts USING fts5(
+  name,
+  content='custom_food',
+  content_rowid='id'
+);
+
+-- Triggers to keep custom food FTS index in sync
+CREATE TRIGGER IF NOT EXISTS custom_food_ai AFTER INSERT ON custom_food BEGIN
+  INSERT INTO custom_food_fts(rowid, name) VALUES (new.id, new.name);
+END;
+
+CREATE TRIGGER IF NOT EXISTS custom_food_ad AFTER DELETE ON custom_food BEGIN
+  INSERT INTO custom_food_fts(custom_food_fts, rowid, name) VALUES('delete', old.id, old.name);
+END;
+
+CREATE TRIGGER IF NOT EXISTS custom_food_au AFTER UPDATE ON custom_food BEGIN
+  INSERT INTO custom_food_fts(custom_food_fts, rowid, name) VALUES('delete', old.id, old.name);
+  INSERT INTO custom_food_fts(rowid, name) VALUES (new.id, new.name);
+END;
 
 -- ============================================
 -- Food Logging
@@ -176,11 +212,34 @@ CREATE TABLE IF NOT EXISTS recipe (
   vitamin_c REAL,
   vitamin_d REAL,
   tblsp_recipe_id INTEGER,
+  is_shared INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_recipe_user ON recipe(user_id);
+CREATE INDEX IF NOT EXISTS idx_recipe_is_shared ON recipe(is_shared);
+
+-- FTS5 index for recipe search
+CREATE VIRTUAL TABLE IF NOT EXISTS recipe_fts USING fts5(
+  name,
+  content='recipe',
+  content_rowid='id'
+);
+
+-- Triggers to keep recipe FTS index in sync
+CREATE TRIGGER IF NOT EXISTS recipe_ai AFTER INSERT ON recipe BEGIN
+  INSERT INTO recipe_fts(rowid, name) VALUES (new.id, new.name);
+END;
+
+CREATE TRIGGER IF NOT EXISTS recipe_ad AFTER DELETE ON recipe BEGIN
+  INSERT INTO recipe_fts(recipe_fts, rowid, name) VALUES('delete', old.id, old.name);
+END;
+
+CREATE TRIGGER IF NOT EXISTS recipe_au AFTER UPDATE ON recipe BEGIN
+  INSERT INTO recipe_fts(recipe_fts, rowid, name) VALUES('delete', old.id, old.name);
+  INSERT INTO recipe_fts(rowid, name) VALUES (new.id, new.name);
+END;
 
 CREATE TABLE IF NOT EXISTS recipe_ingredient (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -206,6 +265,8 @@ CREATE TABLE IF NOT EXISTS daily_target (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL UNIQUE REFERENCES user(id) ON DELETE CASCADE,
   basal_calories INTEGER NOT NULL CHECK (basal_calories >= 500 AND basal_calories <= 10000),
+  nutrient_targets TEXT NOT NULL DEFAULT '{}',
+  -- Legacy columns (kept for migration compatibility)
   protein_target INTEGER CHECK (protein_target >= 0),
   carbs_target INTEGER CHECK (carbs_target >= 0),
   sugar_target INTEGER CHECK (sugar_target >= 0),

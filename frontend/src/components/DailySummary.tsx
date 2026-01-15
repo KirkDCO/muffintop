@@ -1,12 +1,20 @@
-import type { FoodLogEntry } from '@muffintop/shared/types';
+import type { FoodLogEntry, DailyTarget, NutrientKey } from '@muffintop/shared/types';
 import { useNutrients } from '../providers/NutrientProvider';
+import { ProgressIndicator } from './ProgressIndicator';
 
 interface DailySummaryProps {
   entries: FoodLogEntry[];
   date: string;
+  target?: DailyTarget | null;
+  activityCalories?: number;
 }
 
-export function DailySummary({ entries, date }: DailySummaryProps) {
+export function DailySummary({
+  entries,
+  date,
+  target,
+  activityCalories = 0,
+}: DailySummaryProps) {
   const { visibleNutrients, getNutrientDef } = useNutrients();
 
   // Sum all nutrients
@@ -29,9 +37,60 @@ export function DailySummary({ entries, date }: DailySummaryProps) {
     });
   };
 
+  // Calculate calorie budget if target exists
+  const calorieTarget = target ? target.basalCalories + activityCalories : null;
+
+  // Get nutrients that have targets set
+  const nutrientsWithTargets = target
+    ? visibleNutrients.filter(
+        (key) => key !== 'calories' && target.nutrientTargets[key as NutrientKey]
+      )
+    : [];
+
   return (
     <div className="daily-summary">
       <h3>{formatDate(date)}</h3>
+
+      {/* Calorie progress if target set */}
+      {calorieTarget && (
+        <div className="calorie-section">
+          <ProgressIndicator
+            label="Calories"
+            current={totals.calories || 0}
+            target={calorieTarget}
+            direction="max"
+            unit=" kcal"
+          />
+          {activityCalories > 0 && (
+            <p className="budget-breakdown">
+              Base: {target!.basalCalories} + Activity: {activityCalories} ={' '}
+              {calorieTarget} kcal budget
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Nutrient progress indicators */}
+      {nutrientsWithTargets.length > 0 && (
+        <div className="nutrient-progress">
+          {nutrientsWithTargets.map((key) => {
+            const targetInfo = target!.nutrientTargets[key as NutrientKey]!;
+            const def = getNutrientDef(key);
+            return (
+              <ProgressIndicator
+                key={key}
+                label={def.displayName}
+                current={totals[key] || 0}
+                target={targetInfo.value}
+                direction={targetInfo.direction}
+                unit={def.unit}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {/* Basic stats */}
       <div className="summary-stats">
         {visibleNutrients.map((key) => {
           const def = getNutrientDef(key);
@@ -61,9 +120,25 @@ export function DailySummary({ entries, date }: DailySummaryProps) {
         .daily-summary h3 {
           margin: 0 0 1rem 0;
         }
+        .calorie-section {
+          margin-bottom: 1rem;
+          padding-bottom: 1rem;
+          border-bottom: 1px solid #333;
+        }
+        .budget-breakdown {
+          margin: 0.5rem 0 0 0;
+          font-size: 0.8rem;
+          color: #888;
+        }
+        .nutrient-progress {
+          margin-bottom: 1rem;
+          padding-bottom: 1rem;
+          border-bottom: 1px solid #333;
+        }
         .summary-stats {
           display: flex;
-          gap: 2rem;
+          flex-wrap: wrap;
+          gap: 1.5rem;
           margin-bottom: 0.5rem;
         }
         .stat {
@@ -71,7 +146,7 @@ export function DailySummary({ entries, date }: DailySummaryProps) {
           flex-direction: column;
         }
         .stat-value {
-          font-size: 1.5rem;
+          font-size: 1.25rem;
           font-weight: bold;
         }
         .stat-label {
