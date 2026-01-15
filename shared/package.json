@@ -10,6 +10,7 @@
     "./types/*": "./types/*"
   },
   "scripts": {
+    "build": "echo 'Shared types - no build needed'",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
