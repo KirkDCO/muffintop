@@ -1,4 +1,5 @@
 import { getDb } from '../db/connection.js';
+import { getUsdaDb } from '../db/usda-connection.js';
 import { NotFoundError, ConflictError } from '../middleware/error-handler.js';
 import {
   calculateNutrientsForFood,
@@ -48,7 +49,6 @@ interface RecipeIngredientRow {
   quantity_grams: number;
   display_quantity: string | null;
   position: number;
-  food_name: string | null;
   custom_food_name: string | null;
   ingredient_recipe_name: string | null;
 }
@@ -130,12 +130,13 @@ export const recipeService = {
         FROM recipe r
         JOIN recipe_fts fts ON r.id = fts.rowid
         WHERE (r.user_id = ? OR r.is_shared = 1) AND recipe_fts MATCH ?
-        ORDER BY rank
+        ORDER BY fts.rank
         LIMIT ?
       `;
-      // Add wildcards for prefix matching
+      // Add wildcards for prefix matching, filter empty terms
       const searchTerm = search
         .split(/\s+/)
+        .filter((term) => term.length > 0)
         .map((term) => `${term}*`)
         .join(' ');
       params = [userId, searchTerm, limit];
@@ -193,22 +194,40 @@ export const recipeService = {
       throw new NotFoundError(`Recipe with id ${recipeId} not found`);
     }
 
-    // Get ingredients with food names
+    // Get ingredients with custom food and recipe names (USDA foods need separate lookup)
     const ingredients = db
       .prepare(
         `SELECT ri.id, ri.recipe_id, ri.food_id, ri.custom_food_id, ri.ingredient_recipe_id,
                 ri.quantity_grams, ri.display_quantity, ri.position,
-                f.description as food_name,
                 cf.name as custom_food_name,
                 ir.name as ingredient_recipe_name
          FROM recipe_ingredient ri
-         LEFT JOIN food f ON ri.food_id = f.fdc_id
          LEFT JOIN custom_food cf ON ri.custom_food_id = cf.id
          LEFT JOIN recipe ir ON ri.ingredient_recipe_id = ir.id
          WHERE ri.recipe_id = ?
          ORDER BY ri.position`
       )
       .all(recipeId) as RecipeIngredientRow[];
+
+    // Look up USDA food names from the USDA database
+    const usdaDb = getUsdaDb();
+    const foodNames = new Map<number, string>();
+    if (usdaDb) {
+      const foodIds = ingredients
+        .filter((ing) => ing.food_id !== null)
+        .map((ing) => ing.food_id as number);
+
+      if (foodIds.length > 0) {
+        const placeholders = foodIds.map(() => '?').join(',');
+        const foods = usdaDb
+          .prepare(`SELECT fdc_id, description FROM food WHERE fdc_id IN (${placeholders})`)
+          .all(...foodIds) as Array<{ fdc_id: number; description: string }>;
+
+        for (const food of foods) {
+          foodNames.set(food.fdc_id, food.description);
+        }
+      }
+    }
 
     return {
       id: recipe.id,
@@ -221,7 +240,10 @@ export const recipeService = {
         foodId: ing.food_id,
         customFoodId: ing.custom_food_id,
         ingredientRecipeId: ing.ingredient_recipe_id,
-        foodName: ing.food_name || ing.custom_food_name || ing.ingredient_recipe_name || 'Unknown',
+        foodName: (ing.food_id ? foodNames.get(ing.food_id) : null) ||
+                  ing.custom_food_name ||
+                  ing.ingredient_recipe_name ||
+                  'Unknown',
         quantityGrams: ing.quantity_grams,
         displayQuantity: ing.display_quantity,
         position: ing.position,
@@ -366,6 +388,7 @@ export const recipeService = {
     // Use FTS search with prefix matching - user's own + shared
     const formattedTerm = searchTerm
       .split(/\s+/)
+      .filter((term) => term.length > 0)
       .map((term) => `${term}*`)
       .join(' ');
 
@@ -375,7 +398,7 @@ export const recipeService = {
          FROM recipe r
          JOIN recipe_fts fts ON r.id = fts.rowid
          WHERE (r.user_id = ? OR r.is_shared = 1) AND recipe_fts MATCH ?
-         ORDER BY rank
+         ORDER BY fts.rank
          LIMIT ?`
       )
       .all(userId, formattedTerm, limit) as Array<{

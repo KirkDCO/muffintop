@@ -91,12 +91,13 @@ export const customFoodService = {
         FROM custom_food cf
         JOIN custom_food_fts fts ON cf.id = fts.rowid
         WHERE (cf.user_id = ? OR cf.is_shared = 1) AND custom_food_fts MATCH ?
-        ORDER BY rank
+        ORDER BY fts.rank
         LIMIT ?
       `;
-      // Add wildcards for prefix matching
+      // Add wildcards for prefix matching, filter empty terms
       const searchTerm = search
         .split(/\s+/)
+        .filter((term) => term.length > 0)
         .map((term) => `${term}*`)
         .join(' ');
       params = [userId, searchTerm, limit];
@@ -319,6 +320,7 @@ export const customFoodService = {
     // Use FTS search with prefix matching - user's own + shared
     const formattedTerm = searchTerm
       .split(/\s+/)
+      .filter((term) => term.length > 0)
       .map((term) => `${term}*`)
       .join(' ');
 
@@ -328,7 +330,7 @@ export const customFoodService = {
          FROM custom_food cf
          JOIN custom_food_fts fts ON cf.id = fts.rowid
          WHERE (cf.user_id = ? OR cf.is_shared = 1) AND custom_food_fts MATCH ?
-         ORDER BY rank
+         ORDER BY fts.rank
          LIMIT ?`
       )
       .all(userId, formattedTerm, limit) as Array<{

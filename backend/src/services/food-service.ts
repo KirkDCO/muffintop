@@ -83,7 +83,7 @@ export const foodService = {
       params.push(query.dataType);
     }
 
-    sql += ' ORDER BY rank LIMIT ?';
+    sql += ' ORDER BY fts.rank LIMIT ?';
     params.push(query.limit);
 
     const rows = db.prepare(sql).all(...params) as Record<string, unknown>[];

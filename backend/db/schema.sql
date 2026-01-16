@@ -247,7 +247,7 @@ END;
 CREATE TABLE IF NOT EXISTS recipe_ingredient (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   recipe_id INTEGER NOT NULL REFERENCES recipe(id) ON DELETE CASCADE,
-  food_id INTEGER REFERENCES food(fdc_id),
+  food_id INTEGER,  -- No FK - USDA foods are in separate database
   custom_food_id INTEGER REFERENCES custom_food(id),
   ingredient_recipe_id INTEGER REFERENCES recipe(id) ON DELETE RESTRICT,
   quantity_grams REAL NOT NULL CHECK (quantity_grams > 0),
