@@ -4,7 +4,7 @@ A self-hosted calorie and nutrition tracker with multi-user support, recipe mana
 
 ## Features
 
-- **Food Logging** - Search 400k+ foods from USDA FoodData Central, log meals with customizable portions
+- **Food Logging** - Search 2M+ foods from USDA FoodData Central, log meals with customizable portions
 - **Nutrient Tracking** - Track 17 nutrients including calories, protein, carbs, fats, fiber, vitamins, and minerals
 - **Custom Foods** - Create your own foods with per-serving nutrients (matches nutrition labels)
 - **Recipes** - Build recipes from ingredients, automatically calculate nutrition per serving
@@ -19,7 +19,7 @@ A self-hosted calorie and nutrition tracker with multi-user support, recipe mana
 
 - **Backend**: Node.js 20+, Express.js, SQLite (better-sqlite3)
 - **Frontend**: React 18, TypeScript, Vite, TanStack Query
-- **Data**: USDA FoodData Central (~400k foods)
+- **Data**: USDA FoodData Central (~2M foods with serving sizes)
 
 ## Quick Start
 
@@ -40,7 +40,7 @@ Open http://localhost:5173 in your browser.
 
 ## USDA Food Database
 
-The app includes 24 sample foods for testing. For the full USDA database (~400k foods):
+The app includes 24 sample foods for testing. For the full USDA database (~2M foods):
 
 ```bash
 # Download and import (takes 10-20 minutes)
@@ -49,6 +49,11 @@ npm run usda:import
 # Or import only foundation foods (~10k whole foods, faster)
 npm run usda:import -- --foundation-only
 ```
+
+The import includes:
+- **Foundation foods** (~400) - Basic whole foods with detailed nutrients
+- **SR Legacy foods** (~8k) - Standard reference foods with portions (cups, tbsp, etc.)
+- **Branded foods** (~2M) - Commercial products with serving sizes
 
 ## Project Structure
 
@@ -61,8 +66,7 @@ muffintop/
 │   │   ├── models/    # Zod validation schemas
 │   │   └── db/        # Database connections
 │   └── db/
-│       ├── schema.sql
-│       └── migrations/
+│       └── schema.sql # Complete database schema
 ├── frontend/          # React SPA
 │   ├── src/
 │   │   ├── components/
@@ -90,7 +94,6 @@ npm run build:prod       # Production build
 # Database
 npm run db:init          # Initialize database schema
 npm run db:reset         # Reset database (clears all data)
-npm run db:migrate       # Run pending migrations
 
 # Testing
 npm test                 # Run all tests
@@ -165,9 +168,9 @@ Visualize nutrition and weight trends over customizable time periods.
 ### Adding a New Nutrient
 
 1. Add to `shared/types/nutrients.ts` NUTRIENT_REGISTRY
-2. Add column to `backend/db/schema.sql`
-3. Create migration in `backend/db/migrations/`
-4. Update USDA import script if needed
+2. Add column to `backend/db/schema.sql` (all relevant tables)
+3. Update USDA import script if needed
+4. Reset database: `npm run db:reset && npm run usda:import`
 
 ### Running E2E Tests
 

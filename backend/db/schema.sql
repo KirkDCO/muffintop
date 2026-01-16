@@ -149,7 +149,7 @@ END;
 CREATE TABLE IF NOT EXISTS food_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
-  food_id INTEGER REFERENCES food(fdc_id),
+  food_id INTEGER,  -- No FK - USDA foods are in separate database
   custom_food_id INTEGER REFERENCES custom_food(id),
   recipe_id INTEGER REFERENCES recipe(id),
   log_date TEXT NOT NULL,

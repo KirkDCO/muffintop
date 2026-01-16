@@ -409,6 +409,49 @@ async function importToDatabase(options: ImportOptions): Promise<void> {
   insertPortions(portions);
   console.log(`  Inserted ${portionCount} portions`);
 
+  // Phase 5.5: Load branded food serving sizes
+  console.log('\nPhase 5.5: Loading branded food serving sizes...');
+  let brandedPortionCount = 0;
+
+  // Collect branded portions from branded_food.csv
+  const brandedPortions: Array<{ fdcId: number; gramWeight: number; description: string; amount: number }> = [];
+
+  for await (const row of readCSV('branded_food.csv')) {
+    const fdcId = parseInt(row.fdc_id, 10);
+    if (!foods.has(fdcId)) continue;
+
+    // Get serving size - must have valid size and unit
+    const servingSize = parseFloat(row.serving_size);
+    const servingUnit = row.serving_size_unit?.toLowerCase();
+
+    if (isNaN(servingSize) || servingSize <= 0 || !servingUnit) continue;
+
+    // Convert to grams (assume 1ml ≈ 1g for liquids)
+    let gramWeight = servingSize;
+    if (servingUnit === 'ml') {
+      gramWeight = servingSize; // Approximate: 1ml ≈ 1g
+    } else if (servingUnit !== 'g') {
+      // Skip unknown units
+      continue;
+    }
+
+    // Use household serving text if available, otherwise just "serving"
+    const description = row.household_serving_fulltext?.trim() || 'serving';
+
+    brandedPortions.push({ fdcId, gramWeight, description, amount: 1 });
+  }
+
+  // Insert branded portions in transaction
+  const insertBrandedPortions = db.transaction((items: typeof brandedPortions) => {
+    for (const p of items) {
+      insertPortion.run(p.fdcId, p.gramWeight, p.description, p.amount);
+      brandedPortionCount++;
+    }
+  });
+
+  insertBrandedPortions(brandedPortions);
+  console.log(`  Inserted ${brandedPortionCount} branded food portions`);
+
   // Phase 6: Create indexes
   console.log('\nPhase 6: Creating indexes...');
   db.exec(`

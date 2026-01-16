@@ -262,6 +262,22 @@ export function TblspImport({ onComplete, onCancel }: TblspImportProps) {
                           Undo
                         </button>
                       </div>
+                    ) : activeMappingIndex === index ? (
+                      <div className="search-section">
+                        <FoodSearch
+                          onSelect={(food) => handleMapFood(index, food)}
+                          onSelectCustomFood={(customFood) => handleMapCustomFood(index, customFood)}
+                          onSelectRecipe={(recipe) => handleMapRecipe(index, recipe)}
+                          includeRecipes={true}
+                          placeholder="Search for matching food..."
+                        />
+                        <div className="search-actions">
+                          <button onClick={() => handleSkipIngredient(index)}>
+                            Skip this ingredient
+                          </button>
+                          <button onClick={() => setActiveMappingIndex(null)}>Cancel</button>
+                        </div>
+                      </div>
                     ) : mapping.food ? (
                       <div className="mapped-food">
                         <span className="food-name">{mapping.food.description}</span>
@@ -309,22 +325,6 @@ export function TblspImport({ onComplete, onCancel }: TblspImportProps) {
                         >
                           Change
                         </button>
-                      </div>
-                    ) : activeMappingIndex === index ? (
-                      <div className="search-section">
-                        <FoodSearch
-                          onSelect={(food) => handleMapFood(index, food)}
-                          onSelectCustomFood={(customFood) => handleMapCustomFood(index, customFood)}
-                          onSelectRecipe={(recipe) => handleMapRecipe(index, recipe)}
-                          includeRecipes={true}
-                          placeholder="Search for matching food..."
-                        />
-                        <div className="search-actions">
-                          <button onClick={() => handleSkipIngredient(index)}>
-                            Skip this ingredient
-                          </button>
-                          <button onClick={() => setActiveMappingIndex(null)}>Cancel</button>
-                        </div>
                       </div>
                     ) : (
                       <div className="unmapped">

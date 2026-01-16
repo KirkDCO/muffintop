@@ -37,8 +37,9 @@ NODE_ENV=production
 # Create main database with schema
 npm run db:init
 
-# Download and import USDA food data (~400k foods, ~1.5GB download)
+# Download and import USDA food data (~2M foods, ~1.5GB download)
 # This takes 10-20 minutes depending on connection speed
+# Includes branded food serving sizes for easier portion selection
 npm run usda:import
 
 # Options for usda:import:
@@ -220,8 +221,13 @@ cd /opt/muffintop
 git pull
 npm ci
 npm run build:prod
-npm run db:migrate  # Apply any new migrations
 sudo systemctl restart muffintop
+```
+
+**Note**: If the update includes schema changes, you may need to reset and re-import:
+```bash
+npm run db:reset
+npm run usda:import -- --skip-download
 ```
 
 ---

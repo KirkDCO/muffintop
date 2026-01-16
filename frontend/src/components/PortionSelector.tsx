@@ -76,6 +76,15 @@ export function PortionSelector({
     }
   }
 
+  // Default to first portion (serving) when available, instead of grams
+  useEffect(() => {
+    if (fdcId && foodDetail?.portions && foodDetail.portions.length > 0 && !hasUserInteracted) {
+      // Default to first portion (usually "serving") instead of grams
+      setSelectedPortionId(String(foodDetail.portions[0].id));
+      setAmount(1);
+    }
+  }, [fdcId, foodDetail?.portions?.length, hasUserInteracted]);
+
   // Try to auto-detect initial portion from display string
   useEffect(() => {
     const portions = fdcId ? foodDetail?.portions : customFoodDetail?.portions;
