@@ -92,7 +92,7 @@ export function PortionSelector({
       const displayLower = initialDisplay.toLowerCase();
 
       // Try to parse amount from display (e.g., "2 cups" -> amount=2)
-      const match = displayLower.match(/^([\d.\/]+)\s*(.*)$/);
+      const match = displayLower.match(/^([\d./]+)\s*(.*)$/);
       if (match) {
         let parsedAmount = 1;
         const amountStr = match[1];

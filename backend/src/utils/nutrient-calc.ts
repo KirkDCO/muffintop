@@ -6,7 +6,6 @@ import {
   getNutrientColumnsSql,
   createEmptyNutrientValues,
   type NutrientValues,
-  type NutrientKey,
 } from '@muffintop/shared/types';
 
 // Pre-compute the nutrient columns SQL for queries

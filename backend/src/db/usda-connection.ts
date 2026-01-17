@@ -10,10 +10,18 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const USDA_DB_PATH = process.env.USDA_DATABASE_PATH || path.join(__dirname, '../../db/usda/fooddata.db');
+const DEFAULT_USDA_DB_PATH = path.join(__dirname, '../../db/usda/fooddata.db');
 
+let usdaDbPath: string | null = null;
 let usdaDb: Database.Database | null = null;
 let checkedExists = false;
+
+function getUsdaDbPath(): string {
+  if (usdaDbPath === null) {
+    usdaDbPath = process.env.USDA_DATABASE_PATH || DEFAULT_USDA_DB_PATH;
+  }
+  return usdaDbPath;
+}
 
 /**
  * Get the USDA database connection
@@ -25,15 +33,16 @@ export function getUsdaDb(): Database.Database | null {
   if (checkedExists) return null;
   checkedExists = true;
 
-  if (!fs.existsSync(USDA_DB_PATH)) {
-    console.log('USDA database not found at:', USDA_DB_PATH);
+  const dbPath = getUsdaDbPath();
+  if (!fs.existsSync(dbPath)) {
+    console.log('USDA database not found at:', dbPath);
     console.log('Food search will use sample data from main database.');
     console.log('Run "npm run usda:import" to download and import full USDA dataset.');
     return null;
   }
 
   try {
-    usdaDb = new Database(USDA_DB_PATH, { readonly: true });
+    usdaDb = new Database(dbPath, { readonly: true });
     usdaDb.pragma('journal_mode = WAL');
 
     // Verify database has data
@@ -54,20 +63,21 @@ export function closeUsdaDb(): void {
   if (usdaDb) {
     usdaDb.close();
     usdaDb = null;
-    checkedExists = false;
   }
+  checkedExists = false;
+  usdaDbPath = null;
 }
 
 /**
  * Check if USDA database is available
  */
 export function hasUsdaDb(): boolean {
-  return fs.existsSync(USDA_DB_PATH);
+  return fs.existsSync(getUsdaDbPath());
 }
 
 /**
  * Get USDA database path (for diagnostics)
  */
-export function getUsdaDbPath(): string {
-  return USDA_DB_PATH;
+export function getCurrentUsdaDbPath(): string {
+  return getUsdaDbPath();
 }

@@ -27,6 +27,7 @@ export function initializeDatabase(reset = false): void {
       DROP TABLE IF EXISTS body_metric;
       DROP TABLE IF EXISTS activity_log;
       DROP TABLE IF EXISTS daily_target;
+      DROP TABLE IF EXISTS hidden_recent_food;
       DROP TABLE IF EXISTS recipe_ingredient;
       DROP TABLE IF EXISTS recipe_fts;
       DROP TABLE IF EXISTS recipe;

@@ -8,7 +8,6 @@ import {
   type NutrientValues,
   type CustomFood,
   type CustomFoodSummary,
-  type CustomFoodPortion,
 } from '@muffintop/shared/types';
 import type {
   CreateCustomFoodInput,

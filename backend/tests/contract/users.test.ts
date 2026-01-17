@@ -3,6 +3,7 @@ import request from 'supertest';
 import { createApp } from '../../src/app.js';
 import { initializeDatabase } from '../../src/db/init.js';
 import { closeDb, getDb, resetDb } from '../../src/db/connection.js';
+import { closeUsdaDb } from '../../src/db/usda-connection.js';
 import type { Express } from 'express';
 
 describe('Users API', () => {
@@ -10,13 +11,17 @@ describe('Users API', () => {
 
   beforeAll(() => {
     resetDb();
+    closeUsdaDb();
+    // Use in-memory database for tests and disable USDA database
     process.env.DATABASE_PATH = ':memory:';
+    process.env.USDA_DATABASE_PATH = '/nonexistent/path/to/disable/usda.db';
     initializeDatabase(true);
     app = createApp();
   });
 
   afterAll(() => {
     closeDb();
+    closeUsdaDb();
   });
 
   beforeEach(() => {
