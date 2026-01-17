@@ -80,3 +80,22 @@ export function useDeleteFoodLog() {
     },
   });
 }
+
+interface HideRecentFoodInput {
+  foodId?: number;
+  customFoodId?: number;
+  recipeId?: number;
+}
+
+export function useHideRecentFood() {
+  const { currentUser } = useUser();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: HideRecentFoodInput) =>
+      api.post(`/users/${currentUser!.id}/food-log/recent/hide`, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['food-log', 'recent', currentUser?.id] });
+    },
+  });
+}

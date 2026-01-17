@@ -32,6 +32,19 @@ export const foodLogQuerySchema = z.object({
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
+export const hideRecentFoodSchema = z.object({
+  foodId: z.number().int().positive().optional(),
+  customFoodId: z.number().int().positive().optional(),
+  recipeId: z.number().int().positive().optional(),
+}).refine(
+  (data) => {
+    const sources = [data.foodId, data.customFoodId, data.recipeId].filter(Boolean);
+    return sources.length === 1;
+  },
+  { message: 'Exactly one of foodId, customFoodId, or recipeId must be provided' }
+);
+
 export type CreateFoodLogInput = z.infer<typeof createFoodLogSchema>;
 export type UpdateFoodLogInput = z.infer<typeof updateFoodLogSchema>;
 export type FoodLogQuery = z.infer<typeof foodLogQuerySchema>;
+export type HideRecentFoodInput = z.infer<typeof hideRecentFoodSchema>;

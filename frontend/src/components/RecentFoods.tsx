@@ -1,13 +1,20 @@
 import type { RecentFood, CreateFoodLogInput, MealCategory } from '@muffintop/shared/types';
 
+interface HideRecentFoodInput {
+  foodId?: number;
+  customFoodId?: number;
+  recipeId?: number;
+}
+
 interface RecentFoodsProps {
   recentFoods: RecentFood[];
   date: string;
   mealCategory: MealCategory;
   onQuickLog: (input: CreateFoodLogInput) => void;
+  onHide?: (input: HideRecentFoodInput) => void;
 }
 
-export function RecentFoods({ recentFoods, date, mealCategory, onQuickLog }: RecentFoodsProps) {
+export function RecentFoods({ recentFoods, date, mealCategory, onQuickLog, onHide }: RecentFoodsProps) {
   if (recentFoods.length === 0) {
     return null;
   }
@@ -25,20 +32,44 @@ export function RecentFoods({ recentFoods, date, mealCategory, onQuickLog }: Rec
     });
   };
 
+  const handleHide = (e: React.MouseEvent, food: RecentFood) => {
+    e.stopPropagation();
+    if (onHide) {
+      onHide({
+        foodId: food.foodId ?? undefined,
+        customFoodId: food.customFoodId ?? undefined,
+        recipeId: food.recipeId ?? undefined,
+      });
+    }
+  };
+
   return (
     <div className="recent-foods">
       <h4>Quick Add (Recent)</h4>
       <div className="recent-list">
         {recentFoods.slice(0, 6).map((food, idx) => (
-          <button
+          <div
             key={`${food.foodId}-${food.customFoodId}-${food.recipeId}-${idx}`}
             className="recent-item"
-            onClick={() => handleQuickLog(food)}
-            title={`Add ${food.typicalPortionGrams.toFixed(0)}g of ${food.name}`}
           >
-            <span className="recent-name">{food.name}</span>
-            <span className="recent-portion">{food.typicalPortionGrams.toFixed(0)}g</span>
-          </button>
+            <button
+              className="recent-item-content"
+              onClick={() => handleQuickLog(food)}
+              title={`Add ${food.typicalPortionGrams.toFixed(0)}g of ${food.name}`}
+            >
+              <span className="recent-name">{food.name}</span>
+              <span className="recent-portion">{food.typicalPortionGrams.toFixed(0)}g</span>
+            </button>
+            {onHide && (
+              <button
+                className="recent-hide-btn"
+                onClick={(e) => handleHide(e, food)}
+                title="Remove from quick add"
+              >
+                x
+              </button>
+            )}
+          </div>
         ))}
       </div>
 
@@ -57,17 +88,27 @@ export function RecentFoods({ recentFoods, date, mealCategory, onQuickLog }: Rec
           gap: 0.5rem;
         }
         .recent-item {
+          position: relative;
+          display: flex;
+          background: #333;
+          border: 1px solid #444;
+          border-radius: 4px;
+        }
+        .recent-item:hover {
+          border-color: #646cff;
+        }
+        .recent-item-content {
           display: flex;
           flex-direction: column;
           align-items: flex-start;
           padding: 0.5rem 0.75rem;
-          background: #333;
-          border: 1px solid #444;
+          padding-right: 1.5rem;
+          background: transparent;
+          border: none;
           font-size: 0.85rem;
           text-align: left;
-        }
-        .recent-item:hover {
-          border-color: #646cff;
+          cursor: pointer;
+          color: inherit;
         }
         .recent-name {
           font-weight: 500;
@@ -79,6 +120,27 @@ export function RecentFoods({ recentFoods, date, mealCategory, onQuickLog }: Rec
         .recent-portion {
           color: #888;
           font-size: 0.75rem;
+        }
+        .recent-hide-btn {
+          position: absolute;
+          top: 2px;
+          right: 2px;
+          width: 16px;
+          height: 16px;
+          padding: 0;
+          background: transparent;
+          border: none;
+          font-size: 0.7rem;
+          color: #666;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 2px;
+        }
+        .recent-hide-btn:hover {
+          background: #444;
+          color: #f44;
         }
       `}</style>
     </div>

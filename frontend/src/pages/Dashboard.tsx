@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useUser } from '../providers/UserProvider';
-import { useFoodLog, useRecentFoods, useCreateFoodLog, useDeleteFoodLog } from '../hooks/useFoodLog';
+import { useFoodLog, useRecentFoods, useCreateFoodLog, useDeleteFoodLog, useHideRecentFood } from '../hooks/useFoodLog';
 import { useTargets } from '../hooks/useTargets';
 import { useActivity } from '../hooks/useActivity';
 import { DailySummary } from '../components/DailySummary';
@@ -28,6 +28,7 @@ export function Dashboard() {
   const { data: activityData } = useActivity(selectedDate);
   const createFoodLog = useCreateFoodLog();
   const deleteFoodLog = useDeleteFoodLog();
+  const hideRecentFood = useHideRecentFood();
 
   const handleLogFood = async (input: CreateFoodLogInput) => {
     try {
@@ -43,6 +44,14 @@ export function Dashboard() {
       await deleteFoodLog.mutateAsync(entryId);
     } catch (err) {
       console.error('Failed to delete entry:', err);
+    }
+  };
+
+  const handleHideRecentFood = async (input: { foodId?: number; customFoodId?: number; recipeId?: number }) => {
+    try {
+      await hideRecentFood.mutateAsync(input);
+    } catch (err) {
+      console.error('Failed to hide recent food:', err);
     }
   };
 
@@ -110,6 +119,7 @@ export function Dashboard() {
           date={selectedDate}
           mealCategory={selectedMeal}
           onQuickLog={handleLogFood}
+          onHide={handleHideRecentFood}
         />
       )}
 

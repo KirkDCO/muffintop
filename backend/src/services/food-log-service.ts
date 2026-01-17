@@ -14,7 +14,7 @@ import {
   type RecentFood,
   type NutrientValues,
 } from '@muffintop/shared/types';
-import type { CreateFoodLogInput, UpdateFoodLogInput, FoodLogQuery } from '../models/food-log.js';
+import type { CreateFoodLogInput, UpdateFoodLogInput, FoodLogQuery, HideRecentFoodInput } from '../models/food-log.js';
 
 /**
  * Format a date as "Modified YYYY-MM-DD" (e.g., "Modified 2026-01-10")
@@ -270,19 +270,23 @@ export const foodLogService = {
 
     // Get foods logged in last 7 days, grouped by food source
     // Use logged_food_name since USDA foods are in a separate database
+    // Exclude foods that have been hidden by the user
     const rows = db
       .prepare(
         `SELECT
-          food_id, custom_food_id, recipe_id,
+          fl.food_id, fl.custom_food_id, fl.recipe_id,
           COALESCE(fl.logged_food_name, cf.name, r.name) as name,
           MAX(fl.created_at) as last_logged_at,
           AVG(portion_grams) as typical_portion_grams
          FROM food_log fl
          LEFT JOIN custom_food cf ON fl.custom_food_id = cf.id
          LEFT JOIN recipe r ON fl.recipe_id = r.id
+         LEFT JOIN hidden_recent_food hrf ON fl.user_id = hrf.user_id
+           AND (fl.food_id = hrf.food_id OR fl.custom_food_id = hrf.custom_food_id OR fl.recipe_id = hrf.recipe_id)
          WHERE fl.user_id = ?
            AND fl.log_date >= date('now', '-7 days')
-         GROUP BY food_id, custom_food_id, recipe_id
+           AND hrf.id IS NULL
+         GROUP BY fl.food_id, fl.custom_food_id, fl.recipe_id
          ORDER BY last_logged_at DESC
          LIMIT 20`
       )
@@ -303,5 +307,19 @@ export const foodLogService = {
       lastLoggedAt: row.last_logged_at,
       typicalPortionGrams: row.typical_portion_grams,
     }));
+  },
+
+  hideRecent(userId: number, input: HideRecentFoodInput): void {
+    const db = getDb();
+
+    db.prepare(
+      `INSERT OR IGNORE INTO hidden_recent_food (user_id, food_id, custom_food_id, recipe_id)
+       VALUES (?, ?, ?, ?)`
+    ).run(
+      userId,
+      input.foodId || null,
+      input.customFoodId || null,
+      input.recipeId || null
+    );
   },
 };

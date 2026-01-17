@@ -6,6 +6,7 @@ import {
   createFoodLogSchema,
   updateFoodLogSchema,
   foodLogQuerySchema,
+  hideRecentFoodSchema,
 } from '../models/food-log.js';
 
 export const foodLogRouter = Router({ mergeParams: true });
@@ -27,6 +28,14 @@ foodLogRouter.get('/', validateQuery(foodLogQuerySchema), (req, res) => {
 foodLogRouter.get('/recent', (req, res) => {
   const recentFoods = foodLogService.getRecent(req.userId!);
   res.json({ recentFoods });
+});
+
+/**
+ * POST /users/:userId/food-log/recent/hide - Hide a food from quick add
+ */
+foodLogRouter.post('/recent/hide', validateBody(hideRecentFoodSchema), (req, res) => {
+  foodLogService.hideRecent(req.userId!, req.body);
+  res.status(204).send();
 });
 
 /**

@@ -188,6 +188,24 @@ CREATE TABLE IF NOT EXISTS food_log (
 CREATE INDEX IF NOT EXISTS idx_food_log_user_date ON food_log(user_id, log_date);
 CREATE INDEX IF NOT EXISTS idx_food_log_created ON food_log(created_at DESC);
 
+-- Track foods hidden from the quick add (recent foods) section
+CREATE TABLE IF NOT EXISTS hidden_recent_food (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+  food_id INTEGER,
+  custom_food_id INTEGER REFERENCES custom_food(id) ON DELETE CASCADE,
+  recipe_id INTEGER REFERENCES recipe(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  CHECK (
+    (food_id IS NOT NULL AND custom_food_id IS NULL AND recipe_id IS NULL) OR
+    (food_id IS NULL AND custom_food_id IS NOT NULL AND recipe_id IS NULL) OR
+    (food_id IS NULL AND custom_food_id IS NULL AND recipe_id IS NOT NULL)
+  ),
+  UNIQUE(user_id, food_id, custom_food_id, recipe_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_hidden_recent_food_user ON hidden_recent_food(user_id);
+
 -- ============================================
 -- Recipes
 -- ============================================
