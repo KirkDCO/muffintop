@@ -27,7 +27,7 @@ export function RecipeBuilder({
   isLoading = false,
 }: RecipeBuilderProps) {
   const [name, setName] = useState(initialName);
-  const [servings, setServings] = useState(initialServings);
+  const [servings, setServings] = useState(String(initialServings));
   const [isShared, setIsShared] = useState(initialIsShared);
   const [ingredients, setIngredients] = useState<RecipeIngredientDraft[]>(initialIngredients);
   const [showFoodSearch, setShowFoodSearch] = useState(false);
@@ -82,12 +82,14 @@ export function RecipeBuilder({
     );
   };
 
+  const servingsNum = parseInt(servings) || 0;
+
   const handleSubmit = () => {
     if (!name.trim() || ingredients.length === 0) return;
 
     const input: CreateRecipeInput = {
       name: name.trim(),
-      servings,
+      servings: servingsNum,
       isShared,
       ingredients: ingredients.map((ing) => ({
         foodId: ing.foodId,
@@ -100,7 +102,7 @@ export function RecipeBuilder({
     onSave(input);
   };
 
-  const isValid = name.trim().length > 0 && ingredients.length > 0 && servings >= 1;
+  const isValid = name.trim().length > 0 && ingredients.length > 0 && servingsNum >= 1;
 
   return (
     <div className="recipe-builder">
@@ -124,7 +126,11 @@ export function RecipeBuilder({
             <input
               type="number"
               value={servings}
-              onChange={(e) => setServings(Math.max(1, parseInt(e.target.value) || 1))}
+              onChange={(e) => setServings(e.target.value)}
+              onBlur={() => {
+                const val = parseInt(servings) || 1;
+                setServings(String(Math.max(1, val)));
+              }}
               min="1"
               step="1"
               className="servings-input"

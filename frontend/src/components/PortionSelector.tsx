@@ -37,9 +37,9 @@ export function PortionSelector({
   // Custom foods and recipes both work in servings
   const isServingsMode = !!customFoodId || !!ingredientRecipeId;
 
-  const [amount, setAmount] = useState<number>(1);
+  const [amount, setAmount] = useState<string>('1');
   const [selectedPortionId, setSelectedPortionId] = useState<string>(isServingsMode ? 'servings' : 'grams');
-  const [manualValue, setManualValue] = useState<number>(initialValue);
+  const [manualValue, setManualValue] = useState<string>(String(initialValue));
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
   // Build portion options based on food type
@@ -81,7 +81,7 @@ export function PortionSelector({
     if (fdcId && foodDetail?.portions && foodDetail.portions.length > 0 && !hasUserInteracted) {
       // Default to first portion (usually "serving") instead of grams
       setSelectedPortionId(String(foodDetail.portions[0].id));
-      setAmount(1);
+      setAmount('1');
     }
   }, [fdcId, foodDetail?.portions?.length, hasUserInteracted]);
 
@@ -111,14 +111,14 @@ export function PortionSelector({
         for (const portion of portions) {
           const portionLower = portion.description.toLowerCase();
           if (portionLower.includes(unitPart) || unitPart.includes(portionLower.split(' ')[0])) {
-            setAmount(parsedAmount);
+            setAmount(String(parsedAmount));
             setSelectedPortionId(String(portion.id));
             return;
           }
         }
 
         // No portion match, keep manual mode with parsed amount
-        setAmount(parsedAmount);
+        setAmount(String(parsedAmount));
       }
     }
   }, [fdcId, foodDetail, customFoodDetail, initialDisplay]);
@@ -128,22 +128,24 @@ export function PortionSelector({
     if (!hasUserInteracted) return;
 
     const selectedPortion = portionOptions.find(p => p.id === selectedPortionId);
+    const amountNum = parseFloat(amount) || 0;
+    const manualNum = parseFloat(manualValue) || 0;
     let calculatedValue: number;
     let displayQty: string;
 
     const isManualMode = selectedPortionId === 'grams' || selectedPortionId === 'servings';
 
     if (isManualMode) {
-      calculatedValue = manualValue;
-      displayQty = isServingsMode ? `${manualValue} serving(s)` : `${manualValue}g`;
+      calculatedValue = manualNum;
+      displayQty = isServingsMode ? `${manualNum} serving(s)` : `${manualNum}g`;
     } else if (selectedPortion) {
       calculatedValue = isServingsMode
-        ? amount * selectedPortion.value  // servings
-        : Math.round(amount * selectedPortion.value);  // grams
-      displayQty = `${amount} ${selectedPortion.label}`;
+        ? amountNum * selectedPortion.value  // servings
+        : Math.round(amountNum * selectedPortion.value);  // grams
+      displayQty = `${amountNum} ${selectedPortion.label}`;
     } else {
-      calculatedValue = manualValue;
-      displayQty = isServingsMode ? `${manualValue} serving(s)` : `${manualValue}g`;
+      calculatedValue = manualNum;
+      displayQty = isServingsMode ? `${manualNum} serving(s)` : `${manualNum}g`;
     }
 
     onChange(calculatedValue, displayQty);
@@ -152,24 +154,36 @@ export function PortionSelector({
   // Calculate display value for the "= X" label
   const selectedPortion = portionOptions.find(p => p.id === selectedPortionId);
   const isManualMode = selectedPortionId === 'grams' || selectedPortionId === 'servings';
+  const amountNum = parseFloat(amount) || 0;
+  const manualNum = parseFloat(manualValue) || 0;
   const calculatedValue = isManualMode
-    ? manualValue
+    ? manualNum
     : isServingsMode
-      ? amount * (selectedPortion?.value || 1)
-      : Math.round(amount * (selectedPortion?.value || 1));
+      ? amountNum * (selectedPortion?.value || 1)
+      : Math.round(amountNum * (selectedPortion?.value || 1));
 
   if (isLoading) {
     return <span className="loading">Loading portions...</span>;
   }
 
-  const handleAmountChange = (value: number) => {
+  const handleAmountChange = (value: string) => {
     setHasUserInteracted(true);
     setAmount(value);
   };
 
-  const handleManualValueChange = (value: number) => {
+  const handleAmountBlur = () => {
+    const val = parseFloat(amount) || 0;
+    setAmount(String(Math.max(0, val)));
+  };
+
+  const handleManualValueChange = (value: string) => {
     setHasUserInteracted(true);
     setManualValue(value);
+  };
+
+  const handleManualValueBlur = () => {
+    const val = parseFloat(manualValue) || 0;
+    setManualValue(String(Math.max(0, val)));
   };
 
   const handlePortionSelect = (portionId: string) => {
@@ -183,7 +197,8 @@ export function PortionSelector({
         <input
           type="number"
           value={manualValue}
-          onChange={(e) => handleManualValueChange(Math.max(0, parseFloat(e.target.value) || 0))}
+          onChange={(e) => handleManualValueChange(e.target.value)}
+          onBlur={handleManualValueBlur}
           min="0"
           step={isServingsMode ? '0.25' : '1'}
           className="amount-input"
@@ -192,7 +207,8 @@ export function PortionSelector({
         <input
           type="number"
           value={amount}
-          onChange={(e) => handleAmountChange(Math.max(0, parseFloat(e.target.value) || 0))}
+          onChange={(e) => handleAmountChange(e.target.value)}
+          onBlur={handleAmountBlur}
           min="0"
           step="0.25"
           className="amount-input"

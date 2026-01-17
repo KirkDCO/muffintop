@@ -20,7 +20,7 @@ export function CustomFoodDetail({
 }: CustomFoodDetailProps) {
   const { visibleNutrients, getNutrientDef } = useNutrients();
   const { data: customFood, isLoading, error } = useCustomFood(customFoodId);
-  const [servingsToLog, setServingsToLog] = useState<number>(1);
+  const [servingsToLog, setServingsToLog] = useState<string>('1');
   const [selectedPortionId, setSelectedPortionId] = useState<string>('servings');
 
   const isOwner = currentUserId !== undefined && customFood?.userId === currentUserId;
@@ -42,7 +42,8 @@ export function CustomFoodDetail({
 
   // Get current portion multiplier
   const selectedPortion = portionOptions.find((p) => p.id === selectedPortionId);
-  const effectiveServings = servingsToLog * (selectedPortion?.multiplier ?? 1);
+  const servingsNum = parseFloat(servingsToLog) || 0;
+  const effectiveServings = servingsNum * (selectedPortion?.multiplier ?? 1);
 
   // Calculate nutrients for selected servings (nutrients are per 1 serving)
   const calculateForServings = (servings: number): Partial<NutrientValues> => {
@@ -61,8 +62,8 @@ export function CustomFoodDetail({
     if (effectiveServings > 0 && onLog) {
       const portionDesc =
         selectedPortionId === 'servings'
-          ? `${servingsToLog} serving${servingsToLog !== 1 ? 's' : ''}`
-          : `${servingsToLog} ${selectedPortion?.label}`;
+          ? `${servingsNum} serving${servingsNum !== 1 ? 's' : ''}`
+          : `${servingsNum} ${selectedPortion?.label}`;
       onLog(effectiveServings, portionDesc);
     }
   };
@@ -133,7 +134,11 @@ export function CustomFoodDetail({
               <input
                 type="number"
                 value={servingsToLog}
-                onChange={(e) => setServingsToLog(Math.max(0.1, parseFloat(e.target.value) || 0.1))}
+                onChange={(e) => setServingsToLog(e.target.value)}
+                onBlur={() => {
+                  const val = parseFloat(servingsToLog) || 0.1;
+                  setServingsToLog(String(Math.max(0.1, val)));
+                }}
                 min="0.1"
                 step="0.5"
                 className="amount-input"

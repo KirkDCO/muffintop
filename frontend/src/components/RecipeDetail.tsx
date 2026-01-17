@@ -14,7 +14,7 @@ interface RecipeDetailProps {
 export function RecipeDetail({ recipeId, currentUserId, onLog, onEdit, onClose }: RecipeDetailProps) {
   const { visibleNutrients, getNutrientDef } = useNutrients();
   const { data: recipe, isLoading, error } = useRecipe(recipeId);
-  const [servingsToLog, setServingsToLog] = useState<number>(1);
+  const [servingsToLog, setServingsToLog] = useState<string>('1');
 
   const isOwner = currentUserId !== undefined && recipe?.userId === currentUserId;
 
@@ -45,13 +45,14 @@ export function RecipeDetail({ recipeId, currentUserId, onLog, onEdit, onClose }
     return result;
   };
 
+  const servingsNum = parseFloat(servingsToLog) || 0;
   const perServing = calculatePerServing();
-  const forSelectedServings = calculateForServings(servingsToLog);
+  const forSelectedServings = calculateForServings(servingsNum);
 
   const handleLog = () => {
-    if (servingsToLog > 0 && onLog) {
-      const portionDesc = `${servingsToLog} serving${servingsToLog !== 1 ? 's' : ''}`;
-      onLog(servingsToLog, portionDesc);
+    if (servingsNum > 0 && onLog) {
+      const portionDesc = `${servingsNum} serving${servingsNum !== 1 ? 's' : ''}`;
+      onLog(servingsNum, portionDesc);
     }
   };
 
@@ -119,7 +120,11 @@ export function RecipeDetail({ recipeId, currentUserId, onLog, onEdit, onClose }
               <input
                 type="number"
                 value={servingsToLog}
-                onChange={(e) => setServingsToLog(Math.max(0.1, parseFloat(e.target.value) || 0.1))}
+                onChange={(e) => setServingsToLog(e.target.value)}
+                onBlur={() => {
+                  const val = parseFloat(servingsToLog) || 0.1;
+                  setServingsToLog(String(Math.max(0.1, val)));
+                }}
                 min="0.1"
                 step="0.5"
                 className="servings-input"
@@ -127,9 +132,9 @@ export function RecipeDetail({ recipeId, currentUserId, onLog, onEdit, onClose }
             </label>
           </div>
 
-          {servingsToLog > 0 && (
+          {servingsNum > 0 && (
             <div className="calculated-nutrients">
-              <h4>For {servingsToLog} serving{servingsToLog !== 1 ? 's' : ''}:</h4>
+              <h4>For {servingsNum} serving{servingsNum !== 1 ? 's' : ''}:</h4>
               <div className="nutrients-grid highlight">
                 {visibleNutrients.map((key) => {
                   const def = getNutrientDef(key);
@@ -144,7 +149,7 @@ export function RecipeDetail({ recipeId, currentUserId, onLog, onEdit, onClose }
             </div>
           )}
 
-          <button className="log-button" onClick={handleLog} disabled={servingsToLog <= 0}>
+          <button className="log-button" onClick={handleLog} disabled={servingsNum <= 0}>
             Log This Recipe
           </button>
         </div>

@@ -14,7 +14,7 @@ export function FoodDetail({ fdcId, onLog, onClose }: FoodDetailProps) {
   const { data: food, isLoading, error } = useFoodDetail(fdcId);
   const [selectedPortion, setSelectedPortion] = useState<FoodPortion | null>(null);
   const [customGrams, setCustomGrams] = useState<string>('');
-  const [quantity, setQuantity] = useState<number>(1);
+  const [quantity, setQuantity] = useState<string>('1');
 
   if (isLoading) return <div>Loading food details...</div>;
   if (error || !food) return <div>Failed to load food details</div>;
@@ -31,9 +31,10 @@ export function FoodDetail({ fdcId, onLog, onClose }: FoodDetailProps) {
     return result;
   };
 
+  const quantityNum = parseFloat(quantity) || 0;
   const portionGrams = selectedPortion
-    ? selectedPortion.gramWeight * quantity
-    : parseFloat(customGrams) * quantity || 0;
+    ? selectedPortion.gramWeight * quantityNum
+    : parseFloat(customGrams) * quantityNum || 0;
 
   const calculated = calculateNutrients(portionGrams);
 
@@ -41,15 +42,15 @@ export function FoodDetail({ fdcId, onLog, onClose }: FoodDetailProps) {
     if (portionGrams > 0 && onLog) {
       let portionDesc: string;
       if (selectedPortion) {
-        if (quantity === 1) {
+        if (quantityNum === 1) {
           portionDesc = selectedPortion.description;
         } else {
-          portionDesc = `${quantity} x ${selectedPortion.description}`;
+          portionDesc = `${quantityNum} x ${selectedPortion.description}`;
         }
       } else {
         portionDesc = `${portionGrams.toFixed(0)}g`;
       }
-      onLog(portionGrams, quantity, portionDesc);
+      onLog(portionGrams, quantityNum, portionDesc);
     }
   };
 
@@ -130,7 +131,11 @@ export function FoodDetail({ fdcId, onLog, onClose }: FoodDetailProps) {
             <input
               type="number"
               value={quantity}
-              onChange={(e) => setQuantity(Math.max(0.1, parseFloat(e.target.value) || 0.1))}
+              onChange={(e) => setQuantity(e.target.value)}
+              onBlur={() => {
+                const val = parseFloat(quantity) || 0.1;
+                setQuantity(String(Math.max(0.1, val)));
+              }}
               min="0.1"
               step="0.5"
               className="quantity-input"
