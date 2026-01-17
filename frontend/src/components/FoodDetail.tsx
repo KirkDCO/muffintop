@@ -5,7 +5,7 @@ import type { FoodPortion, NutrientValues } from '@muffintop/shared/types';
 
 interface FoodDetailProps {
   fdcId: number;
-  onLog?: (portionGrams: number, portionAmount: number) => void;
+  onLog?: (portionGrams: number, portionAmount: number, portionDescription: string) => void;
   onClose?: () => void;
 }
 
@@ -39,7 +39,17 @@ export function FoodDetail({ fdcId, onLog, onClose }: FoodDetailProps) {
 
   const handleLog = () => {
     if (portionGrams > 0 && onLog) {
-      onLog(portionGrams, quantity);
+      let portionDesc: string;
+      if (selectedPortion) {
+        if (quantity === 1) {
+          portionDesc = selectedPortion.description;
+        } else {
+          portionDesc = `${quantity} x ${selectedPortion.description}`;
+        }
+      } else {
+        portionDesc = `${portionGrams.toFixed(0)}g`;
+      }
+      onLog(portionGrams, quantity, portionDesc);
     }
   };
 

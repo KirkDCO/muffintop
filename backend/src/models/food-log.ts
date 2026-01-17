@@ -10,6 +10,7 @@ export const createFoodLogSchema = z.object({
   recipeId: z.number().int().positive().optional(),
   portionAmount: z.number().positive('Portion amount must be positive'),
   portionGrams: z.number().min(0.1, 'Portion must be at least 0.1g'),
+  portionDescription: z.string().min(1, 'Portion description is required'),
 }).refine(
   (data) => {
     const sources = [data.foodId, data.customFoodId, data.recipeId].filter(Boolean);

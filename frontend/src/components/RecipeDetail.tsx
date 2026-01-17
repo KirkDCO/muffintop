@@ -6,7 +6,7 @@ import type { NutrientValues } from '@muffintop/shared/types';
 interface RecipeDetailProps {
   recipeId: number;
   currentUserId?: number;
-  onLog?: (servings: number) => void;
+  onLog?: (servings: number, portionDescription: string) => void;
   onEdit?: () => void;
   onClose?: () => void;
 }
@@ -50,7 +50,8 @@ export function RecipeDetail({ recipeId, currentUserId, onLog, onEdit, onClose }
 
   const handleLog = () => {
     if (servingsToLog > 0 && onLog) {
-      onLog(servingsToLog);
+      const portionDesc = `${servingsToLog} serving${servingsToLog !== 1 ? 's' : ''}`;
+      onLog(servingsToLog, portionDesc);
     }
   };
 

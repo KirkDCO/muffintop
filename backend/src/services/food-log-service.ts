@@ -58,6 +58,7 @@ function rowToFoodLogEntry(row: Record<string, unknown>): FoodLogEntry {
     foodName: (row.food_name as string) || 'Unknown',
     portionAmount: row.portion_amount as number,
     portionGrams: row.portion_grams as number,
+    portionDescription: (row.portion_description as string) || `${Math.round(row.portion_grams as number)}g`,
     nutrients: rowToNutrients(row),
     foodId: row.food_id as number | null,
     customFoodId: row.custom_food_id as number | null,
@@ -98,7 +99,7 @@ export const foodLogService = {
     let sql = `
       SELECT fl.id, fl.user_id, fl.food_id, fl.custom_food_id, fl.recipe_id,
              fl.log_date, fl.meal_category, fl.portion_amount, fl.portion_grams,
-             fl.created_at, ${FL_NUTRIENT_COLUMNS_SQL},
+             fl.portion_description, fl.created_at, ${FL_NUTRIENT_COLUMNS_SQL},
              COALESCE(fl.logged_food_name, f.description, cf.name, r.name) as food_name
       FROM food_log fl
       LEFT JOIN food f ON fl.food_id = f.fdc_id
@@ -129,7 +130,7 @@ export const foodLogService = {
       .prepare(
         `SELECT fl.id, fl.user_id, fl.food_id, fl.custom_food_id, fl.recipe_id,
                 fl.log_date, fl.meal_category, fl.portion_amount, fl.portion_grams,
-                fl.created_at, ${FL_NUTRIENT_COLUMNS_SQL},
+                fl.portion_description, fl.created_at, ${FL_NUTRIENT_COLUMNS_SQL},
                 COALESCE(fl.logged_food_name, f.description, cf.name, r.name) as food_name
          FROM food_log fl
          LEFT JOIN food f ON fl.food_id = f.fdc_id
@@ -187,8 +188,8 @@ export const foodLogService = {
         `INSERT INTO food_log (
           user_id, food_id, custom_food_id, recipe_id,
           log_date, meal_category, portion_amount, portion_grams,
-          logged_food_name, ${nutrientColumns}
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ${nutrientPlaceholders})`
+          portion_description, logged_food_name, ${nutrientColumns}
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${nutrientPlaceholders})`
       )
       .run(
         userId,
@@ -199,6 +200,7 @@ export const foodLogService = {
         input.mealCategory,
         input.portionAmount,
         input.portionGrams,
+        input.portionDescription,
         loggedFoodName,
         ...nutrientsToParams(nutrients)
       );

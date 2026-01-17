@@ -21,7 +21,7 @@ export function LogFoodModal({ date, onLog, onClose }: LogFoodModalProps) {
   const [selectedItem, setSelectedItem] = useState<SelectedItem>(null);
   const [mealCategory, setMealCategory] = useState<MealCategory>('lunch');
 
-  const handleLogFood = (portionGrams: number, portionAmount: number) => {
+  const handleLogFood = (portionGrams: number, portionAmount: number, portionDescription: string) => {
     if (selectedItem?.type !== 'food') return;
 
     onLog({
@@ -30,10 +30,11 @@ export function LogFoodModal({ date, onLog, onClose }: LogFoodModalProps) {
       foodId: selectedItem.data.fdcId,
       portionAmount,
       portionGrams,
+      portionDescription,
     });
   };
 
-  const handleLogRecipe = (servings: number) => {
+  const handleLogRecipe = (servings: number, portionDescription: string) => {
     if (selectedItem?.type !== 'recipe') return;
 
     onLog({
@@ -42,10 +43,11 @@ export function LogFoodModal({ date, onLog, onClose }: LogFoodModalProps) {
       recipeId: selectedItem.data.id,
       portionAmount: servings,
       portionGrams: servings, // portionGrams stores servings for recipes
+      portionDescription,
     });
   };
 
-  const handleLogCustomFood = (servings: number) => {
+  const handleLogCustomFood = (servings: number, portionDescription?: string) => {
     if (selectedItem?.type !== 'customFood') return;
 
     onLog({
@@ -54,6 +56,7 @@ export function LogFoodModal({ date, onLog, onClose }: LogFoodModalProps) {
       customFoodId: selectedItem.data.id,
       portionAmount: servings,
       portionGrams: servings, // portionGrams stores servings for custom foods
+      portionDescription: portionDescription || `${servings} serving${servings !== 1 ? 's' : ''}`,
     });
   };
 

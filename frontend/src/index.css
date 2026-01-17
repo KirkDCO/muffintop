@@ -89,7 +89,7 @@ input:focus, select:focus {
 
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
+    color: #3d5a80;
     background-color: #ffffff;
   }
   button {

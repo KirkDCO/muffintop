@@ -13,6 +13,7 @@ export interface FoodLogEntry {
   foodName: string;
   portionAmount: number;
   portionGrams: number;
+  portionDescription: string;
   nutrients: NutrientValues;
   foodId: number | null;
   customFoodId: number | null;
@@ -28,6 +29,7 @@ export interface CreateFoodLogInput {
   recipeId?: number;
   portionAmount: number;
   portionGrams: number;
+  portionDescription: string;
 }
 
 export interface UpdateFoodLogInput {

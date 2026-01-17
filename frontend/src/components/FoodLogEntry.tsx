@@ -28,7 +28,7 @@ export function FoodLogEntry({ entry, onEdit, onDelete }: FoodLogEntryProps) {
       <div className="entry-main">
         <span className="meal-badge">{entry.mealCategory}</span>
         <span className="food-name">{entry.foodName}</span>
-        <span className="portion">{entry.portionGrams.toFixed(0)}g</span>
+        <span className="portion">{entry.portionDescription}</span>
       </div>
       <div className="entry-nutrients">
         {visibleNutrients.map((key) => {

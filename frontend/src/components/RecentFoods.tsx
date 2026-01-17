@@ -21,6 +21,7 @@ export function RecentFoods({ recentFoods, date, mealCategory, onQuickLog }: Rec
       recipeId: food.recipeId ?? undefined,
       portionAmount: 1,
       portionGrams: food.typicalPortionGrams,
+      portionDescription: `${food.typicalPortionGrams.toFixed(0)}g`,
     });
   };
 

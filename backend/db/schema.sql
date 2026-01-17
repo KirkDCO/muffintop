@@ -156,6 +156,7 @@ CREATE TABLE IF NOT EXISTS food_log (
   meal_category TEXT NOT NULL CHECK (meal_category IN ('breakfast', 'lunch', 'dinner', 'snack')),
   portion_amount REAL NOT NULL,
   portion_grams REAL NOT NULL,
+  portion_description TEXT,
   -- Snapshot of food name at time of logging (includes version suffix for recipes/custom foods)
   logged_food_name TEXT,
   -- Calculated nutrients for this log entry
