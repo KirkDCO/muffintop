@@ -205,6 +205,18 @@ export const foodLogService = {
         ...nutrientsToParams(nutrients)
       );
 
+    // Unhide this food if it was previously hidden from quick add
+    db.prepare(
+      `DELETE FROM hidden_recent_food
+       WHERE user_id = ?
+         AND (food_id = ? OR custom_food_id = ? OR recipe_id = ?)`
+    ).run(
+      userId,
+      input.foodId || null,
+      input.customFoodId || null,
+      input.recipeId || null
+    );
+
     return this.getById(userId, Number(result.lastInsertRowid));
   },
 
