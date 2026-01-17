@@ -269,15 +269,15 @@ export const foodLogService = {
     const db = getDb();
 
     // Get foods logged in last 7 days, grouped by food source
+    // Use logged_food_name since USDA foods are in a separate database
     const rows = db
       .prepare(
         `SELECT
           food_id, custom_food_id, recipe_id,
-          COALESCE(f.description, cf.name, r.name) as name,
+          COALESCE(fl.logged_food_name, cf.name, r.name) as name,
           MAX(fl.created_at) as last_logged_at,
           AVG(portion_grams) as typical_portion_grams
          FROM food_log fl
-         LEFT JOIN food f ON fl.food_id = f.fdc_id
          LEFT JOIN custom_food cf ON fl.custom_food_id = cf.id
          LEFT JOIN recipe r ON fl.recipe_id = r.id
          WHERE fl.user_id = ?
