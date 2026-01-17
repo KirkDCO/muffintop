@@ -73,13 +73,9 @@ export function IngredientRow({
         .ingredient-info {
           flex: 1;
           min-width: 0;
-          max-width: 200px;
         }
         .ingredient-name {
           display: block;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
         }
         .ingredient-controls {
           display: flex;
