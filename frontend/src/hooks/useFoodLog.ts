@@ -48,6 +48,7 @@ export function useCreateFoodLog() {
       api.post<FoodLogEntry>(`/users/${currentUser!.id}/food-log`, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['food-log', currentUser?.id] });
+      queryClient.invalidateQueries({ queryKey: ['food-log', 'recent', currentUser?.id] });
       queryClient.invalidateQueries({ queryKey: ['dailyStats', currentUser?.id] });
     },
   });
