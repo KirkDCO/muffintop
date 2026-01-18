@@ -20,8 +20,8 @@ interface RecipeCardProps {
 
 export function RecipeCard({ recipe, currentUserId, onClick, onEdit, onDelete }: RecipeCardProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const isOwner = currentUserId !== undefined && recipe.userId === currentUserId;
-  const showActions = isOwner && (onEdit || onDelete);
+  const canEdit = currentUserId !== undefined && (recipe.userId === currentUserId || recipe.isShared);
+  const showActions = canEdit && (onEdit || onDelete);
 
   // Show modified date if updatedAt differs from createdAt
   const showModified = recipe.updatedAt && recipe.updatedAt !== recipe.createdAt;

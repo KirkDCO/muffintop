@@ -16,7 +16,7 @@ export function RecipeDetail({ recipeId, currentUserId, onLog, onEdit, onClose }
   const { data: recipe, isLoading, error } = useRecipe(recipeId);
   const [servingsToLog, setServingsToLog] = useState<string>('1');
 
-  const isOwner = currentUserId !== undefined && recipe?.userId === currentUserId;
+  const canEdit = currentUserId !== undefined && (recipe?.userId === currentUserId || recipe?.isShared);
 
   if (isLoading) return <div>Loading recipe...</div>;
   if (error || !recipe) return <div>Failed to load recipe</div>;
@@ -68,7 +68,7 @@ export function RecipeDetail({ recipeId, currentUserId, onLog, onEdit, onClose }
             <p className="servings-info">{recipe.servings} total servings</p>
           </div>
           <div className="header-actions">
-            {isOwner && onEdit && (
+            {canEdit && onEdit && (
               <button className="edit-button" onClick={onEdit}>
                 Edit
               </button>

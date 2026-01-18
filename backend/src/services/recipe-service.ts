@@ -298,14 +298,14 @@ export const recipeService = {
   },
 
   /**
-   * Update recipe (only owner can update)
+   * Update recipe (owner or any user if shared)
    */
   update(userId: number, recipeId: number, input: UpdateRecipeInput): Recipe {
     const db = getDb();
 
-    // Verify recipe exists and belongs to user (only owner can edit)
+    // Verify recipe exists and user can edit (owner or shared)
     const existing = db
-      .prepare('SELECT id FROM recipe WHERE id = ? AND user_id = ?')
+      .prepare('SELECT id FROM recipe WHERE id = ? AND (user_id = ? OR is_shared = 1)')
       .get(recipeId, userId);
 
     if (!existing) {
@@ -323,7 +323,7 @@ export const recipeService = {
     db.prepare(
       `UPDATE recipe
        SET name = ?, servings = ?, is_shared = ?, ${nutrientUpdates}, updated_at = datetime('now')
-       WHERE id = ? AND user_id = ?`
+       WHERE id = ? AND (user_id = ? OR is_shared = 1)`
     ).run(input.name, input.servings, input.isShared ? 1 : 0, ...nutrientValues, recipeId, userId);
 
     // Delete old ingredients and insert new
@@ -351,14 +351,14 @@ export const recipeService = {
   },
 
   /**
-   * Delete recipe
+   * Delete recipe (owner or any user if shared)
    */
   delete(userId: number, recipeId: number): void {
     const db = getDb();
 
     try {
       const result = db
-        .prepare('DELETE FROM recipe WHERE id = ? AND user_id = ?')
+        .prepare('DELETE FROM recipe WHERE id = ? AND (user_id = ? OR is_shared = 1)')
         .run(recipeId, userId);
 
       if (result.changes === 0) {
