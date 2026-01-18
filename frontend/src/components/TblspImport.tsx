@@ -36,6 +36,7 @@ export function TblspImport({ onComplete, onCancel }: TblspImportProps) {
   const [servings, setServings] = useState(1);
   const [mappings, setMappings] = useState<IngredientMapping[]>([]);
   const [activeMappingIndex, setActiveMappingIndex] = useState<number | null>(null);
+  const [initializedRecipeId, setInitializedRecipeId] = useState<number | null>(null);
 
   const { data: status } = useTblspStatus();
   const { data: recipesData, isLoading: recipesLoading } = useTblspRecipes(
@@ -50,9 +51,10 @@ export function TblspImport({ onComplete, onCancel }: TblspImportProps) {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Initialize mappings when recipe is loaded
+  // Initialize mappings when recipe is loaded (only once per recipe)
   useEffect(() => {
-    if (selectedRecipe && step === 'map') {
+    if (selectedRecipe && selectedRecipeId !== initializedRecipeId) {
+      setInitializedRecipeId(selectedRecipeId);
       setRecipeName(selectedRecipe.title);
       setMappings(
         selectedRecipe.ingredients.map((ing) => ({
@@ -66,7 +68,7 @@ export function TblspImport({ onComplete, onCancel }: TblspImportProps) {
         }))
       );
     }
-  }, [selectedRecipe, step]);
+  }, [selectedRecipe, selectedRecipeId, initializedRecipeId]);
 
   const handleSelectRecipe = (recipe: TblspRecipeSummary) => {
     setSelectedRecipeId(recipe.id);
