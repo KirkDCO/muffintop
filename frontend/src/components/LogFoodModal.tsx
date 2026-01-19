@@ -5,6 +5,14 @@ import { RecipeDetail } from './RecipeDetail';
 import { CustomFoodDetail } from './CustomFoodDetail';
 import type { FoodSummary, RecipeSummary, CustomFoodSummary, MealCategory, CreateFoodLogInput } from '@muffintop/shared/types';
 
+function getMealByTime(): MealCategory {
+  const hour = new Date().getHours();
+  if (hour >= 6 && hour < 9) return 'breakfast';
+  if (hour >= 11 && hour < 13) return 'lunch';
+  if (hour >= 18 && hour < 20) return 'dinner';
+  return 'snack';
+}
+
 type SelectedItem =
   | { type: 'food'; data: FoodSummary }
   | { type: 'recipe'; data: RecipeSummary }
@@ -19,7 +27,7 @@ interface LogFoodModalProps {
 
 export function LogFoodModal({ date, onLog, onClose }: LogFoodModalProps) {
   const [selectedItem, setSelectedItem] = useState<SelectedItem>(null);
-  const [mealCategory, setMealCategory] = useState<MealCategory>('lunch');
+  const [mealCategory, setMealCategory] = useState<MealCategory>(getMealByTime);
 
   const handleLogFood = (portionGrams: number, portionAmount: number, portionDescription: string) => {
     if (selectedItem?.type !== 'food') return;

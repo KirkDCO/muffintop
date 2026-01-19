@@ -13,7 +13,18 @@ import { ActivityInput } from '../components/ActivityInput';
 import type { CreateFoodLogInput, MealCategory } from '@muffintop/shared/types';
 
 function getToday(): string {
-  return new Date().toISOString().split('T')[0];
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatLocalDate(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export function Dashboard() {
@@ -74,9 +85,9 @@ export function Dashboard() {
         <div className="date-nav">
           <button
             onClick={() => {
-              const d = new Date(selectedDate);
+              const d = new Date(selectedDate + 'T00:00:00');
               d.setDate(d.getDate() - 1);
-              setSelectedDate(d.toISOString().split('T')[0]);
+              setSelectedDate(formatLocalDate(d));
             }}
           >
             ←
@@ -88,9 +99,9 @@ export function Dashboard() {
           />
           <button
             onClick={() => {
-              const d = new Date(selectedDate);
+              const d = new Date(selectedDate + 'T00:00:00');
               d.setDate(d.getDate() + 1);
-              setSelectedDate(d.toISOString().split('T')[0]);
+              setSelectedDate(formatLocalDate(d));
             }}
             disabled={selectedDate >= getToday()}
           >
