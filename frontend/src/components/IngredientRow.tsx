@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { PortionSelector } from './PortionSelector';
 
 interface IngredientRowProps {
@@ -21,6 +22,14 @@ export function IngredientRow({
   onPortionChange,
   onRemove,
 }: IngredientRowProps) {
+  // Local state for the grams input to allow clearing before entering new values
+  const [localGrams, setLocalGrams] = useState(String(quantityGrams));
+
+  // Sync local state when prop changes (e.g., from parent updates)
+  useEffect(() => {
+    setLocalGrams(String(quantityGrams));
+  }, [quantityGrams]);
+
   // Show PortionSelector for USDA foods, custom foods, or recipes with onPortionChange
   const showPortionSelector = (fdcId || customFoodId || ingredientRecipeId) && onPortionChange;
 
@@ -43,10 +52,13 @@ export function IngredientRow({
           <>
             <input
               type="number"
-              value={quantityGrams}
-              onChange={(e) =>
-                onPortionChange?.(Math.max(0, parseFloat(e.target.value) || 0), displayQuantity || '')
-              }
+              value={localGrams}
+              onChange={(e) => setLocalGrams(e.target.value)}
+              onBlur={() => {
+                const val = Math.max(0, parseFloat(localGrams) || 0);
+                setLocalGrams(String(val));
+                onPortionChange?.(val, displayQuantity || '');
+              }}
               min="0"
               step="1"
               className="grams-input"

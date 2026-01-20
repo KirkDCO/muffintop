@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import {
   NUTRIENT_REGISTRY,
   DEFAULT_TARGET_DIRECTIONS,
@@ -23,6 +24,14 @@ export function TargetSetup({
   onTargetsChange,
   disabled = false,
 }: TargetSetupProps) {
+  // Local state for basal calories to allow clearing before entering new values
+  const [localBasalCalories, setLocalBasalCalories] = useState(String(basalCalories));
+
+  // Sync local state when prop changes
+  useEffect(() => {
+    setLocalBasalCalories(String(basalCalories));
+  }, [basalCalories]);
+
   // Filter to nutrients that make sense for targets (exclude calories - handled separately)
   const targetableNutrients = selectedNutrients.filter((k) => k !== 'calories');
 
@@ -62,8 +71,14 @@ export function TargetSetup({
           <div className="input-row">
             <input
               type="number"
-              value={basalCalories}
-              onChange={(e) => onBasalChange(parseInt(e.target.value, 10) || 0)}
+              value={localBasalCalories}
+              onChange={(e) => setLocalBasalCalories(e.target.value)}
+              onBlur={() => {
+                const val = parseInt(localBasalCalories, 10) || 0;
+                const clamped = Math.max(500, Math.min(10000, val));
+                setLocalBasalCalories(String(clamped));
+                onBasalChange(clamped);
+              }}
               min={500}
               max={10000}
               step={50}

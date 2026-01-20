@@ -11,19 +11,20 @@ export function ActivityInput({ date, basalCalories }: ActivityInputProps) {
   const upsertActivity = useUpsertActivity();
 
   const currentEntry = data?.entries?.[0];
-  const [calories, setCalories] = useState(currentEntry?.activityCalories || 0);
+  const [calories, setCalories] = useState(String(currentEntry?.activityCalories || 0));
   const [isEditing, setIsEditing] = useState(false);
 
   // Update local state when data changes
   useEffect(() => {
-    setCalories(currentEntry?.activityCalories || 0);
+    setCalories(String(currentEntry?.activityCalories || 0));
   }, [currentEntry]);
 
   const handleSave = async () => {
+    const caloriesNum = parseInt(calories, 10) || 0;
     try {
       await upsertActivity.mutateAsync({
         logDate: date,
-        activityCalories: calories,
+        activityCalories: caloriesNum,
       });
       setIsEditing(false);
     } catch (err) {
@@ -33,7 +34,7 @@ export function ActivityInput({ date, basalCalories }: ActivityInputProps) {
 
   const handleCancel = () => {
     setIsEditing(false);
-    setCalories(currentEntry?.activityCalories || 0);
+    setCalories(String(currentEntry?.activityCalories || 0));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -72,7 +73,11 @@ export function ActivityInput({ date, basalCalories }: ActivityInputProps) {
             <input
               type="number"
               value={calories}
-              onChange={(e) => setCalories(parseInt(e.target.value, 10) || 0)}
+              onChange={(e) => setCalories(e.target.value)}
+              onBlur={() => {
+                const val = parseInt(calories, 10) || 0;
+                setCalories(String(Math.max(0, val)));
+              }}
               onKeyDown={handleKeyDown}
               min={0}
               max={10000}
@@ -92,7 +97,7 @@ export function ActivityInput({ date, basalCalories }: ActivityInputProps) {
           </div>
         ) : (
           <button className="activity-value" onClick={() => setIsEditing(true)}>
-            {calories > 0 ? `${calories} kcal` : 'Add activity'}
+            {parseInt(calories, 10) > 0 ? `${calories} kcal` : 'Add activity'}
           </button>
         )}
       </div>

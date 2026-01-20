@@ -33,7 +33,7 @@ export function TblspImport({ onComplete, onCancel }: TblspImportProps) {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [selectedRecipeId, setSelectedRecipeId] = useState<number | null>(null);
   const [recipeName, setRecipeName] = useState('');
-  const [servings, setServings] = useState(1);
+  const [servings, setServings] = useState('1');
   const [mappings, setMappings] = useState<IngredientMapping[]>([]);
   const [activeMappingIndex, setActiveMappingIndex] = useState<number | null>(null);
   const [initializedRecipeId, setInitializedRecipeId] = useState<number | null>(null);
@@ -140,7 +140,7 @@ export function TblspImport({ onComplete, onCancel }: TblspImportProps) {
     const input: ImportTblspRecipeInput = {
       tblspRecipeId: selectedRecipeId,
       name: recipeName,
-      servings,
+      servings: parseInt(servings) || 1,
       ingredients: ingredientMappings,
     };
 
@@ -228,7 +228,11 @@ export function TblspImport({ onComplete, onCancel }: TblspImportProps) {
                   <input
                     type="number"
                     value={servings}
-                    onChange={(e) => setServings(Math.max(1, parseInt(e.target.value) || 1))}
+                    onChange={(e) => setServings(e.target.value)}
+                    onBlur={() => {
+                      const val = parseInt(servings) || 1;
+                      setServings(String(Math.max(1, val)));
+                    }}
                     min="1"
                     className="servings-input"
                   />
@@ -367,7 +371,7 @@ export function TblspImport({ onComplete, onCancel }: TblspImportProps) {
       {step === 'review' && (
         <div className="review-step">
           <h3>{recipeName}</h3>
-          <p>{servings} serving{servings !== 1 ? 's' : ''}</p>
+          <p>{servings} serving{parseInt(servings) !== 1 ? 's' : ''}</p>
 
           <h4>Ingredients ({mappedCount})</h4>
           <ul className="review-ingredients">
