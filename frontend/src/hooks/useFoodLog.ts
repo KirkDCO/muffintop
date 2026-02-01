@@ -29,13 +29,13 @@ export function useFoodLog(date?: string) {
   });
 }
 
-export function useRecentFoods() {
+export function useRecentFoods(todayDate: string) {
   const { currentUser } = useUser();
 
   return useQuery<RecentFoodsResponse>({
-    queryKey: ['food-log', 'recent', currentUser?.id],
-    queryFn: () => api.get(`/users/${currentUser!.id}/food-log/recent`),
-    enabled: !!currentUser,
+    queryKey: ['food-log', 'recent', currentUser?.id, todayDate],
+    queryFn: () => api.get(`/users/${currentUser!.id}/food-log/recent?today=${todayDate}`),
+    enabled: !!currentUser && !!todayDate,
   });
 }
 

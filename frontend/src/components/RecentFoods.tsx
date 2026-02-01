@@ -47,7 +47,7 @@ export function RecentFoods({ recentFoods, date, mealCategory, onQuickLog, onHid
     <div className="recent-foods">
       <h4>Quick Add (Recent)</h4>
       <div className="recent-list">
-        {recentFoods.slice(0, 6).map((food, idx) => (
+        {recentFoods.slice(0, 12).map((food, idx) => (
           <div
             key={`${food.foodId}-${food.customFoodId}-${food.recipeId}-${idx}`}
             className="recent-item"
@@ -83,13 +83,15 @@ export function RecentFoods({ recentFoods, date, mealCategory, onQuickLog, onHid
           color: #888;
         }
         .recent-list {
-          display: flex;
-          flex-wrap: wrap;
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
           gap: 0.5rem;
         }
         .recent-item {
           position: relative;
           display: flex;
+          min-width: 0;
+          overflow: hidden;
           background: #333;
           border: 1px solid #444;
           border-radius: 4px;
@@ -101,6 +103,8 @@ export function RecentFoods({ recentFoods, date, mealCategory, onQuickLog, onHid
           display: flex;
           flex-direction: column;
           align-items: flex-start;
+          width: 100%;
+          min-width: 0;
           padding: 0.5rem 0.75rem;
           padding-right: 1.5rem;
           background: transparent;
@@ -112,7 +116,7 @@ export function RecentFoods({ recentFoods, date, mealCategory, onQuickLog, onHid
         }
         .recent-name {
           font-weight: 500;
-          max-width: 150px;
+          max-width: 100%;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;

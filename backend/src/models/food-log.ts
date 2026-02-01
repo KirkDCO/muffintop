@@ -44,7 +44,12 @@ export const hideRecentFoodSchema = z.object({
   { message: 'Exactly one of foodId, customFoodId, or recipeId must be provided' }
 );
 
+export const recentFoodQuerySchema = z.object({
+  today: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD format'),
+});
+
 export type CreateFoodLogInput = z.infer<typeof createFoodLogSchema>;
 export type UpdateFoodLogInput = z.infer<typeof updateFoodLogSchema>;
 export type FoodLogQuery = z.infer<typeof foodLogQuerySchema>;
 export type HideRecentFoodInput = z.infer<typeof hideRecentFoodSchema>;
+export type RecentFoodQuery = z.infer<typeof recentFoodQuerySchema>;

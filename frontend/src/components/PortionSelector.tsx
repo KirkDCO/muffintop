@@ -87,6 +87,7 @@ export function PortionSelector({
 
   // Try to auto-detect initial portion from display string
   useEffect(() => {
+    if (hasUserInteracted) return;
     const portions = fdcId ? foodDetail?.portions : customFoodDetail?.portions;
     if (portions && initialDisplay) {
       const displayLower = initialDisplay.toLowerCase();
@@ -121,7 +122,7 @@ export function PortionSelector({
         setAmount(String(parsedAmount));
       }
     }
-  }, [fdcId, foodDetail, customFoodDetail, initialDisplay]);
+  }, [fdcId, foodDetail, customFoodDetail, initialDisplay, hasUserInteracted]);
 
   // Calculate value when amount or portion changes - only after user interaction
   useEffect(() => {

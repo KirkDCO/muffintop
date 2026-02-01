@@ -11,7 +11,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { useTrendStats } from '../hooks/useTrendStats';
-import type { TrendTimeRange, NutrientKey, DailyTarget } from '@muffintop/shared/types';
+import type { TrendTimeRange, NutrientKey, DailyTarget, WeightUnit } from '@muffintop/shared/types';
 
 interface TrendChartProps {
   target?: DailyTarget | null;
@@ -102,6 +102,14 @@ export function TrendChart({ target }: TrendChartProps) {
     );
   }
 
+  // Determine preferred weight display unit from most recent entry
+  const preferredWeightUnit: WeightUnit =
+    data.weightData.length > 0
+      ? data.weightData[data.weightData.length - 1].weightUnit
+      : 'kg';
+  const fromKg = (kg: number): number =>
+    preferredWeightUnit === 'lb' ? kg / 0.453592 : kg;
+
   // Merge nutrient and weight data for the chart
   // Weight is sparse, so we need to align it with nutrient dates
   const weightByDate = new Map(data.weightData.map((w) => [w.date, w]));
@@ -155,7 +163,7 @@ export function TrendChart({ target }: TrendChartProps) {
           date: weekStart,
           displayDate: new Date(weekStart + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
           nutrient: week.nutrientCount > 0 ? Math.round(week.nutrientSum / week.nutrientCount) : null,
-          weight: lastWeight?.weightKg ?? null,
+          weight: lastWeight ? fromKg(lastWeight.weightKg) : null,
           weightUnit: lastWeight?.weightUnit ?? null,
         };
       });
@@ -166,7 +174,7 @@ export function TrendChart({ target }: TrendChartProps) {
         date: point.date,
         displayDate: new Date(point.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         nutrient: point.value !== null ? Math.round(point.value) : null,
-        weight: w?.weightKg ?? null,
+        weight: w ? fromKg(w.weightKg) : null,
         weightUnit: w?.weightUnit ?? null,
       };
     });
@@ -275,7 +283,7 @@ export function TrendChart({ target }: TrendChartProps) {
                 if (value === null || value === undefined) return ['No data', name];
                 const numValue = typeof value === 'number' ? value : parseFloat(String(value));
                 if (name === 'weight') {
-                  return [`${numValue.toFixed(1)} kg`, 'Weight'];
+                  return [`${numValue.toFixed(1)} ${preferredWeightUnit}`, 'Weight'];
                 }
                 return [`${Math.round(numValue)} ${nutrientConfig.unit}`, nutrientConfig.label];
               }}

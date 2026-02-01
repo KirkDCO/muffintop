@@ -7,6 +7,7 @@ import {
   updateFoodLogSchema,
   foodLogQuerySchema,
   hideRecentFoodSchema,
+  recentFoodQuerySchema,
 } from '../models/food-log.js';
 
 export const foodLogRouter = Router({ mergeParams: true });
@@ -25,8 +26,9 @@ foodLogRouter.get('/', validateQuery(foodLogQuerySchema), (req, res) => {
 /**
  * GET /users/:userId/food-log/recent - Get recently logged foods
  */
-foodLogRouter.get('/recent', (req, res) => {
-  const recentFoods = foodLogService.getRecent(req.userId!);
+foodLogRouter.get('/recent', validateQuery(recentFoodQuerySchema), (req, res) => {
+  const { today } = req.query as { today: string };
+  const recentFoods = foodLogService.getRecent(req.userId!, today);
   res.json({ recentFoods });
 });
 

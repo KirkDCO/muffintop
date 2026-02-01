@@ -277,32 +277,35 @@ export const foodLogService = {
     }
   },
 
-  getRecent(userId: number): RecentFood[] {
+  getRecent(userId: number, todayDate: string): RecentFood[] {
     const db = getDb();
 
-    // Get foods logged in last 7 days, grouped by food source
+    // Get foods logged in last 7 days (excluding today), grouped by food source
     // Use logged_food_name since USDA foods are in a separate database
     // Exclude foods that have been hidden by the user
+    // Order by frequency (most logged first) for better Quick Add relevance
     const rows = db
       .prepare(
         `SELECT
           fl.food_id, fl.custom_food_id, fl.recipe_id,
           COALESCE(fl.logged_food_name, cf.name, r.name) as name,
           MAX(fl.created_at) as last_logged_at,
-          AVG(portion_grams) as typical_portion_grams
+          AVG(portion_grams) as typical_portion_grams,
+          COUNT(*) as log_count
          FROM food_log fl
          LEFT JOIN custom_food cf ON fl.custom_food_id = cf.id
          LEFT JOIN recipe r ON fl.recipe_id = r.id
          LEFT JOIN hidden_recent_food hrf ON fl.user_id = hrf.user_id
            AND (fl.food_id = hrf.food_id OR fl.custom_food_id = hrf.custom_food_id OR fl.recipe_id = hrf.recipe_id)
          WHERE fl.user_id = ?
-           AND fl.log_date >= date('now', '-7 days')
+           AND fl.log_date >= date(?, '-7 days')
+           AND fl.log_date < ?
            AND hrf.id IS NULL
          GROUP BY fl.food_id, fl.custom_food_id, fl.recipe_id
-         ORDER BY last_logged_at DESC
+         ORDER BY log_count DESC, last_logged_at DESC
          LIMIT 20`
       )
-      .all(userId) as {
+      .all(userId, todayDate, todayDate) as {
       food_id: number | null;
       custom_food_id: number | null;
       recipe_id: number | null;

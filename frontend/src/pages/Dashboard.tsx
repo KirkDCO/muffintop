@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useUser } from '../providers/UserProvider';
-import { useFoodLog, useRecentFoods, useCreateFoodLog, useDeleteFoodLog, useHideRecentFood } from '../hooks/useFoodLog';
+import { useFoodLog, useRecentFoods, useCreateFoodLog, useUpdateFoodLog, useDeleteFoodLog, useHideRecentFood } from '../hooks/useFoodLog';
 import { useTargets } from '../hooks/useTargets';
 import { useActivity } from '../hooks/useActivity';
 import { DailySummary } from '../components/DailySummary';
@@ -27,17 +27,24 @@ function formatLocalDate(d: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+function getMealByTime(): MealCategory {
+  const hour = new Date().getHours();
+  if (hour >= 6 && hour < 9) return 'breakfast';
+  if (hour >= 11 && hour < 13) return 'lunch';
+  if (hour >= 18 && hour < 20) return 'dinner';
+  return 'snack';
+}
+
 export function Dashboard() {
   const { currentUser } = useUser();
   const [selectedDate, setSelectedDate] = useState(getToday());
   const [showLogModal, setShowLogModal] = useState(false);
-  const [selectedMeal] = useState<MealCategory>('lunch');
-
   const { data: foodLogData, isLoading: loadingLog } = useFoodLog(selectedDate);
-  const { data: recentData } = useRecentFoods();
+  const { data: recentData } = useRecentFoods(getToday());
   const { data: targetData } = useTargets();
   const { data: activityData } = useActivity(selectedDate);
   const createFoodLog = useCreateFoodLog();
+  const updateFoodLog = useUpdateFoodLog();
   const deleteFoodLog = useDeleteFoodLog();
   const hideRecentFood = useHideRecentFood();
 
@@ -55,6 +62,14 @@ export function Dashboard() {
       await deleteFoodLog.mutateAsync(entryId);
     } catch (err) {
       console.error('Failed to delete entry:', err);
+    }
+  };
+
+  const handleMoveEntry = async (entryId: number, mealCategory: MealCategory) => {
+    try {
+      await updateFoodLog.mutateAsync({ entryId, input: { mealCategory } });
+    } catch (err) {
+      console.error('Failed to move entry:', err);
     }
   };
 
@@ -128,7 +143,7 @@ export function Dashboard() {
         <RecentFoods
           recentFoods={recentFoods}
           date={selectedDate}
-          mealCategory={selectedMeal}
+          mealCategory={getMealByTime()}
           onQuickLog={handleLogFood}
           onHide={handleHideRecentFood}
         />
@@ -156,6 +171,7 @@ export function Dashboard() {
                       key={entry.id}
                       entry={entry}
                       onDelete={handleDeleteEntry}
+                      onMove={handleMoveEntry}
                     />
                   ))}
                 </div>
