@@ -58,3 +58,9 @@ backend/:memory:
 
 # Services
 muffintop.service
+
+# Android app planning (internal docs)
+specs/pwa-implementation.md
+specs/twa-playstore-implementation.md
+specs/react-native-standalone-implementation.md
+specs/webview-wrapper-implementation.md
