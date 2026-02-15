@@ -71,13 +71,24 @@
       │               └─────────────────┘
       │
       │               ┌─────────────────┐
-      └──────────────<│  BodyMetric     │
+      ├──────────────<│  BodyMetric     │
+      │               ├─────────────────┤
+      │               │ id (PK)         │
+      │               │ user_id (FK)    │
+      │               │ metric_date     │
+      │               │ weight_value    │
+      │               │ weight_unit     │
+      │               │ created_at      │
+      │               └─────────────────┘
+      │
+      │               ┌─────────────────┐
+      └──────────────<│   UserEvent     │
                       ├─────────────────┤
                       │ id (PK)         │
                       │ user_id (FK)    │
-                      │ metric_date     │
-                      │ weight_value    │
-                      │ weight_unit     │
+                      │ event_date      │
+                      │ description     │
+                      │ color           │
                       │ created_at      │
                       └─────────────────┘
 ```
@@ -111,10 +122,23 @@ Nutritional item from USDA FoodData Central. Read-only reference data.
 | calories | REAL | NULL | kcal per 100g |
 | protein | REAL | NULL | grams per 100g |
 | carbs | REAL | NULL | grams per 100g |
-| added_sugar | REAL | NULL | grams per 100g (may be NULL) |
+| fiber | REAL | NULL | grams per 100g |
+| added_sugar | REAL | NULL | grams per 100g |
+| total_sugar | REAL | NULL | grams per 100g |
+| total_fat | REAL | NULL | grams per 100g |
+| saturated_fat | REAL | NULL | grams per 100g |
+| trans_fat | REAL | NULL | grams per 100g |
+| cholesterol | REAL | NULL | mg per 100g |
+| sodium | REAL | NULL | mg per 100g |
+| potassium | REAL | NULL | mg per 100g |
+| calcium | REAL | NULL | mg per 100g |
+| iron | REAL | NULL | mg per 100g |
+| vitamin_a | REAL | NULL | mcg per 100g |
+| vitamin_c | REAL | NULL | mg per 100g |
+| vitamin_d | REAL | NULL | mcg per 100g |
 
 **Notes**:
-- Nutrients denormalized for query performance
+- 17 nutrients tracked (denormalized for query performance)
 - Values are per 100g (USDA standard)
 - FTS5 index on description for search
 
@@ -225,15 +249,15 @@ User's nutrient goals and basal expenditure.
 | id | INTEGER | PK, AUTO | Unique identifier |
 | user_id | INTEGER | FK → User, NOT NULL, UNIQUE | Owner (one per user) |
 | basal_calories | INTEGER | NOT NULL | Daily basal expenditure (kcal) |
-| protein_target | INTEGER | NULL | Daily protein goal (grams) |
-| carbs_target | INTEGER | NULL | Daily carbs goal (grams) |
-| sugar_target | INTEGER | NULL | Daily added sugar limit (grams) |
+| nutrient_targets | TEXT | NULL | JSON object with nutrient targets |
 | created_at | TEXT | NOT NULL | ISO 8601 timestamp |
 | updated_at | TEXT | NOT NULL | ISO 8601 timestamp |
 
 **Notes**:
 - One record per user (UNIQUE constraint)
-- Macro targets optional (NULL = not tracking)
+- `nutrient_targets` is JSON: `{ "protein": { "value": 150, "direction": "min" }, ... }`
+- Direction can be 'min' (try to reach) or 'max' (stay under)
+- Supports all 17 tracked nutrients
 
 ### ActivityLog
 
@@ -270,6 +294,24 @@ User's physical measurements (weight only for MVP).
 - Store in user's preferred unit; convert for display as needed
 - Schema supports future metric types via new columns
 
+### UserEvent
+
+Significant events for correlation with nutrition/weight trends.
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| id | INTEGER | PK, AUTO | Unique identifier |
+| user_id | INTEGER | FK → User, NOT NULL | Owner |
+| event_date | TEXT | NOT NULL | ISO 8601 date (YYYY-MM-DD) |
+| description | TEXT | NOT NULL | Event description |
+| color | TEXT | NOT NULL, DEFAULT '#ff6b6b' | Display color (hex) |
+| created_at | TEXT | NOT NULL | ISO 8601 timestamp |
+
+**Notes**:
+- Multiple events allowed per day (UNIQUE on user_id + event_date + description)
+- Events display as markers on trend charts
+- Useful for tracking diet changes, illness, travel, etc.
+
 ## Indexes
 
 ```sql
@@ -288,6 +330,9 @@ CREATE INDEX idx_recipe_ingredient_recipe ON recipe_ingredient(recipe_id);
 -- Activity and metrics
 CREATE UNIQUE INDEX idx_activity_user_date ON activity_log(user_id, log_date);
 CREATE UNIQUE INDEX idx_body_metric_user_date ON body_metric(user_id, metric_date);
+
+-- User events
+CREATE INDEX idx_user_event_user_date ON user_event(user_id, event_date);
 ```
 
 ## Validation Rules

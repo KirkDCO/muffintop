@@ -39,10 +39,13 @@ export interface UpdateFoodLogInput {
   portionGrams?: number;
 }
 
+export type FoodType = 'food' | 'customFood' | 'recipe';
+
 export interface RecentFood {
   foodId: number | null;
   customFoodId: number | null;
   recipeId: number | null;
+  foodType: FoodType;
   name: string;
   lastLoggedAt: string;
   typicalPortionGrams: number;

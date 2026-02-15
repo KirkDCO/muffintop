@@ -175,6 +175,9 @@ Base URL: `http://localhost:3002/api/v1`
 | POST | `/users/:id/activity` | Log activity calories |
 | GET | `/users/:id/metrics/weight` | Get weight history |
 | POST | `/users/:id/metrics/weight` | Log weight |
+| GET | `/users/:id/events` | Get user events |
+| POST | `/users/:id/events` | Create event |
+| DELETE | `/users/:id/events/:id` | Delete event |
 | GET | `/users/:id/stats/daily` | Daily nutrient summary |
 | GET | `/users/:id/stats/trends` | Longitudinal trend data |
 

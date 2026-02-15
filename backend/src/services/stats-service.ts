@@ -7,9 +7,13 @@ import type {
   TrendTimeRange,
   NutrientDataPoint,
   WeightDataPoint,
+  EventDataPoint,
+  ActivityDataPoint,
   LongitudinalTrendResult,
   WeightUnit,
+  TargetDirection,
 } from '@muffintop/shared/types';
+import { DEFAULT_TARGET_DIRECTIONS } from '@muffintop/shared/types';
 
 const NUTRIENT_KEYS: (keyof NutrientValues)[] = [
   'calories',
@@ -296,14 +300,60 @@ export function getTrendData(
     weightKg: toKg(row.weightValue, row.weightUnit as WeightUnit),
   }));
 
+  // Get user events for the date range
+  const eventStmt = db.prepare(`
+    SELECT
+      event_date as date,
+      description,
+      color
+    FROM user_event
+    WHERE user_id = ? AND event_date >= ? AND event_date <= ?
+    ORDER BY event_date ASC
+  `);
+
+  const eventRows = eventStmt.all(userId, startDate, endDate) as Array<{
+    date: string;
+    description: string;
+    color: string;
+  }>;
+
+  const eventData: EventDataPoint[] = eventRows.map((row) => ({
+    date: row.date,
+    description: row.description,
+    color: row.color,
+  }));
+
+  // Get activity calories per day (for dynamic calorie target line)
+  const activityStmt = db.prepare(`
+    SELECT
+      log_date as date,
+      activity_calories as activityCalories
+    FROM activity_log
+    WHERE user_id = ? AND log_date >= ? AND log_date <= ?
+    ORDER BY log_date ASC
+  `);
+
+  const activityRows = activityStmt.all(userId, startDate, endDate) as Array<{
+    date: string;
+    activityCalories: number;
+  }>;
+
+  const activityData: ActivityDataPoint[] = activityRows.map((row) => ({
+    date: row.date,
+    activityCalories: row.activityCalories,
+  }));
+
   // Get target for the selected nutrient
   let nutrientTarget: number | null = null;
+  let nutrientTargetDirection: TargetDirection | null = null;
+
   if (nutrient === 'calories') {
     const targetStmt = db.prepare(
       'SELECT basal_calories FROM daily_target WHERE user_id = ?'
     );
     const targetRow = targetStmt.get(userId) as { basal_calories: number } | undefined;
     nutrientTarget = targetRow?.basal_calories ?? null;
+    nutrientTargetDirection = nutrientTarget !== null ? 'max' : null;
   } else {
     const targetStmt = db.prepare(
       'SELECT nutrient_targets FROM daily_target WHERE user_id = ?'
@@ -312,7 +362,10 @@ export function getTrendData(
     if (targetRow) {
       try {
         const targets = JSON.parse(targetRow.nutrient_targets);
-        nutrientTarget = targets[nutrient]?.value ?? null;
+        const targetEntry = targets[nutrient];
+        nutrientTarget = targetEntry?.value ?? null;
+        // Use stored direction, or fall back to default for this nutrient
+        nutrientTargetDirection = targetEntry?.direction ?? DEFAULT_TARGET_DIRECTIONS[nutrient] ?? null;
       } catch {
         nutrientTarget = null;
       }
@@ -326,6 +379,9 @@ export function getTrendData(
     nutrientData,
     weightData,
     nutrientTarget,
+    nutrientTargetDirection,
+    activityData,
+    eventData,
   };
 }
 

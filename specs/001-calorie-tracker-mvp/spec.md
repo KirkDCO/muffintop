@@ -385,3 +385,34 @@ only their own data. Delivers value through privacy and personalization.
   in MVP.
 - No admin role; all users have equal permissions. First user is created through
   normal registration flow.
+
+## Post-MVP Additions
+
+The following features were added after the initial MVP implementation:
+
+### Event Logging
+Users can log significant events (diet changes, illness, travel, medication changes)
+that display as markers on trend charts. This helps correlate life events with
+nutrition and weight changes.
+
+- **FR-028**: Users can create events with a date, description, and color.
+- **FR-029**: Events display as vertical markers on trend charts.
+- **FR-030**: Users can delete events they created.
+
+### Extended Nutrient Tracking
+The original MVP tracked 4 nutrients. The system now tracks 17 nutrients:
+- Calories, protein, carbs, fiber
+- Added sugar, total sugar
+- Total fat, saturated fat, trans fat
+- Cholesterol, sodium, potassium
+- Calcium, iron
+- Vitamin A, vitamin C, vitamin D
+
+### Target Directions
+Nutrient targets now support direction ('min' or 'max'):
+- 'min' targets (protein, fiber, vitamins): user aims to meet or exceed
+- 'max' targets (calories, sodium, sugar): user aims to stay under
+- Trend charts use colorblind-friendly colors (blue/orange) based on direction
+
+### Weight Unit Preference
+Users can log weight in either kg or lb, with automatic conversion for display.

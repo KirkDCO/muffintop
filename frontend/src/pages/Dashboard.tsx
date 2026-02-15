@@ -137,7 +137,7 @@ export function Dashboard() {
 
       <DailyChart target={target} />
 
-      <TrendChart target={target} />
+      <TrendChart target={target} onDateSelect={setSelectedDate} />
 
       {recentFoods.length > 0 && (
         <RecentFoods

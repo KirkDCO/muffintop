@@ -8,10 +8,11 @@ A self-hosted calorie and nutrition tracker with multi-user support, recipe mana
 - **Nutrient Tracking** - Track 17 nutrients including calories, protein, carbs, fats, fiber, vitamins, and minerals
 - **Custom Foods** - Create your own foods with per-serving nutrients (matches nutrition labels)
 - **Recipes** - Build recipes from ingredients, automatically calculate nutrition per serving
-- **Daily Targets** - Set calorie and nutrient goals, track progress with visual indicators
-- **Weight Tracking** - Log body weight, view trends over time
-- **Activity Logging** - Record exercise calories to adjust daily budget
-- **Trend Charts** - Visualize nutrition and weight trends over weeks/months
+- **Daily Targets** - Set calorie and nutrient goals with min/max directions, track progress with visual indicators
+- **Weight Tracking** - Log body weight in kg or lbs, view trends over time
+- **Activity Logging** - Record exercise calories to adjust daily calorie budget
+- **Event Logging** - Mark significant events (diet changes, illness, travel) that appear on trend charts
+- **Trend Charts** - Visualize nutrition and weight trends with target comparison and colorblind-friendly indicators
 - **Multi-User** - Support multiple users with isolated data
 - **Recipe Import** - Import recipes from [tblsp](https://github.com/KirkDCO/tblsp) recipe manager
 
@@ -130,10 +131,22 @@ All endpoints are prefixed with `/api/v1`.
 | `POST /users/:id/food-log` | Log food entry |
 | `GET /users/:id/recipes` | List recipes |
 | `POST /users/:id/recipes` | Create recipe |
+| `GET /users/:id/custom-foods` | List custom foods |
+| `POST /users/:id/custom-foods` | Create custom food |
 | `GET /users/:id/targets` | Get daily targets |
 | `PUT /users/:id/targets` | Update targets |
+| `GET /users/:id/activity` | Get activity log |
+| `POST /users/:id/activity` | Log activity calories |
+| `GET /users/:id/metrics/weight` | Get weight history |
+| `POST /users/:id/metrics/weight` | Log weight |
+| `GET /users/:id/events` | Get user events |
+| `POST /users/:id/events` | Create event |
 | `GET /users/:id/stats/daily` | Daily nutrition stats |
 | `GET /users/:id/stats/trends` | Longitudinal trends |
+
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for potential future features including copy meals, favorites, water tracking, barcode scanning, and more.
 
 ## Production Deployment
 
@@ -154,14 +167,40 @@ NODE_ENV=production npm run start:prod
 
 ## Screenshots
 
-### Dashboard
-Daily food log with nutrient summary and progress indicators.
+### Food Logging
+Search foods, select portions, and log meals throughout the day.
 
-### Recipe Builder
-Create recipes from ingredients with automatic nutrition calculation.
+![Food Logging](screenshots/FoodLogging.png)
+
+### Nutrient Tracking
+Track 17 nutrients with progress indicators showing daily intake vs targets.
+
+![Nutrient Display & Tracking](screenshots/NutrientDisplayTracking.png)
+
+### Daily Targets
+Set calorie and nutrient goals with min/max directions for each nutrient.
+
+![Daily Targets](screenshots/DailyTargets.png)
+
+### Recipes
+Create recipes from ingredients with automatic nutrition calculation per serving.
+
+![Recipes](screenshots/Recipes.png)
+
+### Custom Foods
+Add your own foods with per-serving nutrition data.
+
+![Custom Foods](screenshots/CustomFoods.png)
+
+### Weight & Event Tracking
+Log body weight and significant events that appear on trend charts.
+
+![Weight and Event Tracking](screenshots/WeightAndEventTracking.png)
 
 ### Trend Charts
-Visualize nutrition and weight trends over customizable time periods.
+Visualize nutrition and weight trends over customizable time periods with target comparison.
+
+![Daily, Weekly & Long-term Trends](screenshots/DailyWeeklyLongTermTrends.png)
 
 ## Development
 

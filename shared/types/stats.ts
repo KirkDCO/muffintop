@@ -1,5 +1,6 @@
 import type { NutrientValues } from './nutrients.js';
 import type { WeightUnit } from './metrics.js';
+import type { TargetDirection } from './targets.js';
 
 export interface DailyNutrientSummary {
   date: string;
@@ -44,6 +45,17 @@ export interface WeightDataPoint {
   weightKg: number;
 }
 
+export interface EventDataPoint {
+  date: string;
+  description: string;
+  color: string;
+}
+
+export interface ActivityDataPoint {
+  date: string;
+  activityCalories: number;
+}
+
 export interface LongitudinalTrendResult {
   startDate: string;
   endDate: string;
@@ -52,8 +64,14 @@ export interface LongitudinalTrendResult {
   nutrientData: NutrientDataPoint[];
   // Weight entries (sparse - only dates with entries)
   weightData: WeightDataPoint[];
-  // Target value for the selected nutrient (if set)
+  // Base target value for the selected nutrient (if set)
   nutrientTarget: number | null;
+  // Direction of the target ('min' = try to reach, 'max' = stay under)
+  nutrientTargetDirection: TargetDirection | null;
+  // Activity calories per day (sparse - only dates with activity logged)
+  activityData: ActivityDataPoint[];
+  // User events (sparse - only dates with events)
+  eventData: EventDataPoint[];
 }
 
 export interface LongitudinalTrendQuery {

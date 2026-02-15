@@ -20,6 +20,12 @@ export function RecentFoods({ recentFoods, date, mealCategory, onQuickLog, onHid
   }
 
   const handleQuickLog = (food: RecentFood) => {
+    // For USDA foods, use the typical portion grams (averaged from recent logs)
+    // For recipes/custom foods, always use 1 serving to avoid compounding calories
+    const isServingBased = food.foodType === 'recipe' || food.foodType === 'customFood';
+    const portionGrams = isServingBased ? 1 : food.typicalPortionGrams;
+    const portionDescription = isServingBased ? '1 serving' : `${food.typicalPortionGrams.toFixed(0)}g`;
+
     onQuickLog({
       logDate: date,
       mealCategory,
@@ -27,8 +33,8 @@ export function RecentFoods({ recentFoods, date, mealCategory, onQuickLog, onHid
       customFoodId: food.customFoodId ?? undefined,
       recipeId: food.recipeId ?? undefined,
       portionAmount: 1,
-      portionGrams: food.typicalPortionGrams,
-      portionDescription: `${food.typicalPortionGrams.toFixed(0)}g`,
+      portionGrams,
+      portionDescription,
     });
   };
 
@@ -47,7 +53,14 @@ export function RecentFoods({ recentFoods, date, mealCategory, onQuickLog, onHid
     <div className="recent-foods">
       <h4>Quick Add (Recent)</h4>
       <div className="recent-list">
-        {recentFoods.slice(0, 12).map((food, idx) => (
+        {recentFoods.slice(0, 12).map((food, idx) => {
+          const isServingBased = food.foodType === 'recipe' || food.foodType === 'customFood';
+          const portionDisplay = isServingBased ? '1 serving' : `${food.typicalPortionGrams.toFixed(0)}g`;
+          const titleText = isServingBased
+            ? `Add 1 serving of ${food.name}`
+            : `Add ${food.typicalPortionGrams.toFixed(0)}g of ${food.name}`;
+
+          return (
           <div
             key={`${food.foodId}-${food.customFoodId}-${food.recipeId}-${idx}`}
             className="recent-item"
@@ -55,10 +68,10 @@ export function RecentFoods({ recentFoods, date, mealCategory, onQuickLog, onHid
             <button
               className="recent-item-content"
               onClick={() => handleQuickLog(food)}
-              title={`Add ${food.typicalPortionGrams.toFixed(0)}g of ${food.name}`}
+              title={titleText}
             >
               <span className="recent-name">{food.name}</span>
-              <span className="recent-portion">{food.typicalPortionGrams.toFixed(0)}g</span>
+              <span className="recent-portion">{portionDisplay}</span>
             </button>
             {onHide && (
               <button
@@ -70,7 +83,8 @@ export function RecentFoods({ recentFoods, date, mealCategory, onQuickLog, onHid
               </button>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <style>{`

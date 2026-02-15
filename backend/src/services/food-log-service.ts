@@ -284,6 +284,7 @@ export const foodLogService = {
     // Use logged_food_name since USDA foods are in a separate database
     // Exclude foods that have been hidden by the user
     // Order by frequency (most logged first) for better Quick Add relevance
+    // Include food_type for correct display in Quick Add (recipes/custom foods use servings, not grams)
     const rows = db
       .prepare(
         `SELECT
@@ -291,7 +292,12 @@ export const foodLogService = {
           COALESCE(fl.logged_food_name, cf.name, r.name) as name,
           MAX(fl.created_at) as last_logged_at,
           AVG(portion_grams) as typical_portion_grams,
-          COUNT(*) as log_count
+          COUNT(*) as log_count,
+          CASE
+            WHEN fl.food_id IS NOT NULL THEN 'food'
+            WHEN fl.custom_food_id IS NOT NULL THEN 'customFood'
+            ELSE 'recipe'
+          END as food_type
          FROM food_log fl
          LEFT JOIN custom_food cf ON fl.custom_food_id = cf.id
          LEFT JOIN recipe r ON fl.recipe_id = r.id
@@ -312,12 +318,14 @@ export const foodLogService = {
       name: string;
       last_logged_at: string;
       typical_portion_grams: number;
+      food_type: 'food' | 'customFood' | 'recipe';
     }[];
 
     return rows.map((row) => ({
       foodId: row.food_id,
       customFoodId: row.custom_food_id,
       recipeId: row.recipe_id,
+      foodType: row.food_type,
       name: row.name,
       lastLoggedAt: row.last_logged_at,
       typicalPortionGrams: row.typical_portion_grams,

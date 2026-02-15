@@ -8,6 +8,8 @@ import { NutrientPreferencesEditor } from '../components/NutrientPreferencesEdit
 import { TargetSetup } from '../components/TargetSetup';
 import { WeightLogger } from '../components/WeightLogger';
 import { WeightTrend } from '../components/WeightTrend';
+import { EventLogger } from '../components/EventLogger';
+import { EventList } from '../components/EventList';
 import type { NutrientKey, NutrientTarget } from '@muffintop/shared/types';
 
 export function Settings() {
@@ -190,6 +192,17 @@ export function Settings() {
         />
 
         <WeightTrend />
+      </section>
+
+      <section className="settings-section">
+        <h2>Event Tracking</h2>
+        <p className="section-description">
+          Track health events (illness, GI issues, etc.) that appear as colored markers on your
+          trends chart.
+        </p>
+
+        <EventLogger />
+        <EventList />
       </section>
 
       <style>{`
