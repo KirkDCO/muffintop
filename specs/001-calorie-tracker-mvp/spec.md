@@ -433,3 +433,22 @@ cumulative logging (multiple entries per day) and configurable targets.
   configured in Settings. Internal storage is always in mL.
 - **FR-036**: Progress toward intake targets is shown via the ProgressIndicator
   component with direction-aware coloring.
+
+### Event Analysis
+Users can statistically compare nutrient intake and food choices in the days leading
+up to an event against a baseline, answering: "Are my nutrient levels or food choices
+different before this type of event?"
+
+- **FR-037**: Users can run event analysis by selecting events by description (all
+  matching) or by individual event instance, with configurable date range and lookback
+  window (1-7 days).
+- **FR-038**: System computes pre-event window means for selected metrics (any of the
+  17 tracked nutrients plus water and caffeine intake) and compares them against up to
+  100 randomly sampled non-overlapping baseline windows from the same date range.
+- **FR-039**: Nutrient comparison table displays mean, standard deviation, percent
+  difference, and Cohen's d effect size for each selected metric, sorted by effect
+  size magnitude. Metrics with |effect size| > 0.5 are highlighted.
+- **FR-040**: Food frequency table shows foods ranked by the difference in appearance
+  frequency between pre-event and baseline windows, using canonical food names.
+- **FR-041**: Days with no logged data are excluded from analysis to prevent spurious
+  zero-value dilution of averages. A warning is shown when baseline count is low (<30).

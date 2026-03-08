@@ -8,6 +8,7 @@ import { Foods } from './pages/Foods';
 import { Recipes } from './pages/Recipes';
 import { Dashboard } from './pages/Dashboard';
 import { Settings } from './pages/Settings';
+import { EventAnalysis } from './pages/EventAnalysis';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { currentUser, isLoading } = useUser();
@@ -40,6 +41,7 @@ function App() {
           <Route path="foods" element={<Foods />} />
           <Route path="recipes" element={<Recipes />} />
           <Route path="trends" element={<div>Trends page coming soon...</div>} />
+          <Route path="analysis" element={<EventAnalysis />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>

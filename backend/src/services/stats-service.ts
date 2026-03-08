@@ -388,7 +388,7 @@ export function getTrendData(
 /**
  * Convert nutrient key to database column name
  */
-function nutrientKeyToColumn(key: NutrientKey): string {
+export function nutrientKeyToColumn(key: NutrientKey): string {
   const mapping: Record<NutrientKey, string> = {
     calories: 'calories',
     protein: 'protein',

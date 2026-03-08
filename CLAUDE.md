@@ -107,6 +107,7 @@ npm run build:prod       # Production build
 
 ## Recent Features
 
+- Event analysis: statistical comparison of pre-event nutrient intake and food choices against baseline windows
 - Water and caffeine intake tracking with cumulative logging, quick-add buttons, and configurable targets
 - Event logging for tracking life events on trend charts
 - Direction-aware nutrient targets (min/max)

@@ -11,6 +11,7 @@ import { metricsRouter } from './metrics.js';
 import { eventsRouter } from './events.js';
 import { intakeRouter } from './intake.js';
 import { tblspRouter } from './tblsp.js';
+import { eventAnalysisRouter } from './event-analysis.js';
 
 export const apiRouter = Router();
 
@@ -27,3 +28,4 @@ apiRouter.use('/users/:userId/metrics', metricsRouter);
 apiRouter.use('/users/:userId/events', eventsRouter);
 apiRouter.use('/users/:userId/intake', intakeRouter);
 apiRouter.use('/tblsp', tblspRouter);
+apiRouter.use('/users/:userId/analysis/events', eventAnalysisRouter);
