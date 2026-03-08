@@ -114,11 +114,9 @@ Calculate recommended targets based on:
 - Goal (lose/maintain/gain)
 - Output suggested calorie and macro targets
 
-### 17. Food/Weight Correlations
-Analyze and display correlations:
-- "Higher protein intake correlates with weight loss"
-- "Sodium tends to increase water weight next day"
-- Requires statistical analysis on historical data
+### ~~17. Food/Weight Correlations~~ Partially Implemented
+Event Analysis provides pre-event vs baseline comparison of nutrient intake and food frequency with effect size statistics. Remaining: automated correlation detection across all data (without requiring event selection).
+- ~~Requires statistical analysis on historical data~~ ✅ Event analysis endpoint and UI
 
 ---
 

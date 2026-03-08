@@ -13,6 +13,7 @@ A self-hosted calorie and nutrition tracker with multi-user support, recipe mana
 - **Activity Logging** - Record exercise calories to adjust daily calorie budget
 - **Intake Tracking** - Track daily water and caffeine intake with quick-add buttons, configurable targets, and unit preferences (mL/fl oz)
 - **Event Logging** - Mark significant events (diet changes, illness, travel) that appear on trend charts
+- **Event Analysis** - Compare pre-event nutrient intake and food choices against baseline windows with effect size statistics
 - **Trend Charts** - Visualize nutrition and weight trends with target comparison and colorblind-friendly indicators
 - **Multi-User** - Support multiple users with isolated data
 - **Recipe Import** - Import recipes from [tblsp](https://github.com/KirkDCO/tblsp) recipe manager
@@ -147,6 +148,7 @@ All endpoints are prefixed with `/api/v1`.
 | `POST /users/:id/events` | Create event |
 | `GET /users/:id/stats/daily` | Daily nutrition stats |
 | `GET /users/:id/stats/trends` | Longitudinal trends |
+| `POST /users/:id/analysis/events` | Event analysis (pre-event vs baseline) |
 
 ## Roadmap
 
