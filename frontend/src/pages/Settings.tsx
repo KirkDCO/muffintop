@@ -10,7 +10,7 @@ import { WeightLogger } from '../components/WeightLogger';
 import { WeightTrend } from '../components/WeightTrend';
 import { EventLogger } from '../components/EventLogger';
 import { EventList } from '../components/EventList';
-import type { NutrientKey, NutrientTarget } from '@muffintop/shared/types';
+import type { NutrientKey, NutrientTarget, IntakeType, IntakeTarget, WaterUnit } from '@muffintop/shared/types';
 
 export function Settings() {
   const { currentUser, setCurrentUser } = useUser();
@@ -28,6 +28,8 @@ export function Settings() {
   // Target editing state
   const [basalCalories, setBasalCalories] = useState(2000);
   const [nutrientTargets, setNutrientTargets] = useState<Partial<Record<NutrientKey, NutrientTarget>>>({});
+  const [intakeTargets, setIntakeTargets] = useState<Partial<Record<IntakeType, IntakeTarget>>>({});
+  const [waterUnit, setWaterUnit] = useState<WaterUnit>('ml');
   const [hasTargetChanges, setHasTargetChanges] = useState(false);
   const [targetSaveStatus, setTargetSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
@@ -44,9 +46,17 @@ export function Settings() {
     if (targetData?.target) {
       setBasalCalories(targetData.target.basalCalories);
       setNutrientTargets(targetData.target.nutrientTargets || {});
+      setIntakeTargets(targetData.target.intakeTargets || {});
       setHasTargetChanges(false);
     }
   }, [targetData]);
+
+  // Sync water unit from preferences
+  useEffect(() => {
+    if (preferences?.waterUnit) {
+      setWaterUnit(preferences.waterUnit);
+    }
+  }, [preferences]);
 
   const handleNutrientsChange = (nutrients: NutrientKey[]) => {
     setSelectedNutrients(nutrients);
@@ -59,7 +69,7 @@ export function Settings() {
 
     setSaveStatus('saving');
     try {
-      await updatePreferences.mutateAsync(selectedNutrients);
+      await updatePreferences.mutateAsync({ visibleNutrients: selectedNutrients, waterUnit });
       setSaveStatus('saved');
       setHasChanges(false);
       setTimeout(() => setSaveStatus('idle'), 2000);
@@ -85,6 +95,18 @@ export function Settings() {
     setTargetSaveStatus('idle');
   };
 
+  const handleIntakeTargetsChange = (targets: Partial<Record<IntakeType, IntakeTarget>>) => {
+    setIntakeTargets(targets);
+    setHasTargetChanges(true);
+    setTargetSaveStatus('idle');
+  };
+
+  const handleWaterUnitChange = (unit: WaterUnit) => {
+    setWaterUnit(unit);
+    setHasTargetChanges(true);
+    setTargetSaveStatus('idle');
+  };
+
   const handleSaveTargets = async () => {
     if (!currentUser) return;
 
@@ -93,7 +115,10 @@ export function Settings() {
       await updateTargets.mutateAsync({
         basalCalories,
         nutrientTargets,
+        intakeTargets,
       });
+      // Also persist waterUnit since its control lives in the targets section
+      await updatePreferences.mutateAsync({ visibleNutrients: selectedNutrients, waterUnit });
       setTargetSaveStatus('saved');
       setHasTargetChanges(false);
       setTimeout(() => setTargetSaveStatus('idle'), 2000);
@@ -160,8 +185,12 @@ export function Settings() {
           selectedNutrients={selectedNutrients}
           basalCalories={basalCalories}
           nutrientTargets={nutrientTargets}
+          intakeTargets={intakeTargets}
+          waterUnit={waterUnit}
           onBasalChange={handleBasalChange}
           onTargetsChange={handleNutrientTargetsChange}
+          onIntakeTargetsChange={handleIntakeTargetsChange}
+          onWaterUnitChange={handleWaterUnitChange}
           disabled={updateTargets.isPending}
         />
 

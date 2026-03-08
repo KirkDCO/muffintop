@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import type {
-  NutrientKey,
   NutrientPreferences,
   UpdateNutrientPreferencesInput,
 } from '@muffintop/shared/types';
@@ -24,10 +23,8 @@ export function useUpdateNutrientPreferences(userId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (visibleNutrients: NutrientKey[]) =>
-      api.put<NutrientPreferences>(`/users/${userId}/preferences`, {
-        visibleNutrients,
-      } satisfies UpdateNutrientPreferencesInput),
+    mutationFn: (input: UpdateNutrientPreferencesInput) =>
+      api.put<NutrientPreferences>(`/users/${userId}/preferences`, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nutrientPreferences', userId] });
     },

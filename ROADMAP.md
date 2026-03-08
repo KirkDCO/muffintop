@@ -54,12 +54,8 @@ Save common meal combinations (e.g., "My usual breakfast") for one-click logging
 - Template builder UI
 - Apply template to current day
 
-### 8. Water/Hydration Tracking
-Track daily water intake with goal setting.
-- New hydration_log table
-- Quick-add water buttons (8oz, 16oz, custom)
-- Daily progress indicator
-- Show on dashboard
+### ~~8. Water/Hydration Tracking~~ ✅ Implemented
+Implemented as "Intake Tracking" covering both water and caffeine. See intake_log table, IntakeInput component, and intake API endpoints.
 
 ### 9. Nutrient Alerts
 Warn when approaching or exceeding limits:
@@ -150,5 +146,5 @@ Based on user value and implementation effort:
 2. **Favorite Foods** - Simple to implement, speeds up logging
 3. **Weekly Reports** - Provides motivation and insights
 4. **Data Export** - Important for users who want their data
-5. **Water Tracking** - Common feature users expect
+5. ~~**Water Tracking**~~ ✅ Implemented (includes caffeine tracking)
 6. **Barcode Scanning** - Game-changer for logging speed (if mobile use is common)

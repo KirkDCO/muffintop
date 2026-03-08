@@ -294,6 +294,7 @@ CREATE TABLE IF NOT EXISTS daily_target (
   user_id INTEGER NOT NULL UNIQUE REFERENCES user(id) ON DELETE CASCADE,
   basal_calories INTEGER NOT NULL CHECK (basal_calories >= 500 AND basal_calories <= 10000),
   nutrient_targets TEXT NOT NULL DEFAULT '{}',
+  intake_targets TEXT NOT NULL DEFAULT '{}',
   -- Legacy columns (kept for migration compatibility)
   protein_target INTEGER CHECK (protein_target >= 0),
   carbs_target INTEGER CHECK (carbs_target >= 0),
@@ -312,6 +313,22 @@ CREATE TABLE IF NOT EXISTS activity_log (
 );
 
 CREATE INDEX IF NOT EXISTS idx_activity_log_user_date ON activity_log(user_id, log_date);
+
+-- ============================================
+-- Intake Tracking (water, caffeine)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS intake_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+  log_date TEXT NOT NULL,
+  intake_type TEXT NOT NULL CHECK (intake_type IN ('water', 'caffeine')),
+  amount REAL NOT NULL CHECK (amount > 0),
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_intake_log_user_date_type
+  ON intake_log(user_id, log_date, intake_type);
 
 -- ============================================
 -- Body Metrics
@@ -336,6 +353,7 @@ CREATE INDEX IF NOT EXISTS idx_body_metric_user_date ON body_metric(user_id, met
 CREATE TABLE IF NOT EXISTS user_nutrient_preferences (
   user_id INTEGER PRIMARY KEY REFERENCES user(id) ON DELETE CASCADE,
   visible_nutrients TEXT NOT NULL DEFAULT '["calories","protein","carbs","totalFat","saturatedFat","fiber","addedSugar"]',
+  water_unit TEXT NOT NULL DEFAULT 'ml' CHECK (water_unit IN ('ml', 'fl_oz')),
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

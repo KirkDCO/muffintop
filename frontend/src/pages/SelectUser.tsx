@@ -11,6 +11,9 @@ import {
   type User,
   type NutrientKey,
   type NutrientTarget,
+  type IntakeType,
+  type IntakeTarget,
+  type WaterUnit,
 } from '@muffintop/shared/types';
 
 type CreateStep = 'name' | 'nutrients' | 'targets';
@@ -33,6 +36,8 @@ export function SelectUser() {
   const [nutrientTargets, setNutrientTargets] = useState<
     Partial<Record<NutrientKey, NutrientTarget>>
   >({});
+  const [intakeTargets, setIntakeTargets] = useState<Partial<Record<IntakeType, IntakeTarget>>>({});
+  const [waterUnit, setWaterUnit] = useState<WaterUnit>('ml');
 
   const handleSelectUser = (user: User) => {
     setCurrentUser(user);
@@ -65,6 +70,7 @@ export function SelectUser() {
         input: {
           basalCalories,
           nutrientTargets,
+          intakeTargets,
         },
       });
 
@@ -75,6 +81,7 @@ export function SelectUser() {
       setSelectedNutrients([...DEFAULT_VISIBLE_NUTRIENTS]);
       setBasalCalories(2000);
       setNutrientTargets({});
+      setIntakeTargets({});
 
       // Navigate to dashboard
       handleSelectUser(user);
@@ -176,8 +183,12 @@ export function SelectUser() {
                 selectedNutrients={selectedNutrients}
                 basalCalories={basalCalories}
                 nutrientTargets={nutrientTargets}
+                intakeTargets={intakeTargets}
+                waterUnit={waterUnit}
                 onBasalChange={setBasalCalories}
                 onTargetsChange={setNutrientTargets}
+                onIntakeTargetsChange={setIntakeTargets}
+                onWaterUnitChange={setWaterUnit}
                 disabled={isPending}
               />
               <div className="form-actions">

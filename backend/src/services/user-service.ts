@@ -6,6 +6,7 @@ import {
   type UserWithPreferences,
   type NutrientKey,
   type NutrientPreferences,
+  type WaterUnit,
 } from '@muffintop/shared/types';
 import type { CreateUserInput } from '../models/user.js';
 
@@ -18,6 +19,7 @@ interface UserRow {
 interface PreferencesRow {
   user_id: number;
   visible_nutrients: string;
+  water_unit: string;
   created_at: string;
   updated_at: string;
 }
@@ -115,7 +117,7 @@ export const userService = {
   /**
    * Set user's nutrient display preferences
    */
-  setPreferences(userId: number, visibleNutrients: NutrientKey[]): NutrientPreferences {
+  setPreferences(userId: number, visibleNutrients: NutrientKey[], waterUnit?: WaterUnit): NutrientPreferences {
     const db = getDb();
 
     // Verify user exists
@@ -123,24 +125,36 @@ export const userService = {
 
     const nutrientsJson = JSON.stringify(visibleNutrients);
 
-    db.prepare(
-      `INSERT INTO user_nutrient_preferences (user_id, visible_nutrients, updated_at)
-       VALUES (?, ?, datetime('now'))
-       ON CONFLICT(user_id) DO UPDATE SET
-         visible_nutrients = excluded.visible_nutrients,
-         updated_at = datetime('now')`
-    ).run(userId, nutrientsJson);
+    if (waterUnit) {
+      db.prepare(
+        `INSERT INTO user_nutrient_preferences (user_id, visible_nutrients, water_unit, updated_at)
+         VALUES (?, ?, ?, datetime('now'))
+         ON CONFLICT(user_id) DO UPDATE SET
+           visible_nutrients = excluded.visible_nutrients,
+           water_unit = excluded.water_unit,
+           updated_at = datetime('now')`
+      ).run(userId, nutrientsJson, waterUnit);
+    } else {
+      db.prepare(
+        `INSERT INTO user_nutrient_preferences (user_id, visible_nutrients, updated_at)
+         VALUES (?, ?, datetime('now'))
+         ON CONFLICT(user_id) DO UPDATE SET
+           visible_nutrients = excluded.visible_nutrients,
+           updated_at = datetime('now')`
+      ).run(userId, nutrientsJson);
+    }
 
     // Fetch the updated row
     const row = db
       .prepare(
-        'SELECT user_id, visible_nutrients, created_at, updated_at FROM user_nutrient_preferences WHERE user_id = ?'
+        'SELECT user_id, visible_nutrients, water_unit, created_at, updated_at FROM user_nutrient_preferences WHERE user_id = ?'
       )
       .get(userId) as PreferencesRow;
 
     return {
       userId: row.user_id,
       visibleNutrients: JSON.parse(row.visible_nutrients) as NutrientKey[],
+      waterUnit: (row.water_unit || 'ml') as WaterUnit,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
@@ -154,7 +168,7 @@ export const userService = {
 
     const row = db
       .prepare(
-        'SELECT user_id, visible_nutrients, created_at, updated_at FROM user_nutrient_preferences WHERE user_id = ?'
+        'SELECT user_id, visible_nutrients, water_unit, created_at, updated_at FROM user_nutrient_preferences WHERE user_id = ?'
       )
       .get(userId) as PreferencesRow | undefined;
 
@@ -164,6 +178,7 @@ export const userService = {
       return {
         userId,
         visibleNutrients: [...DEFAULT_VISIBLE_NUTRIENTS],
+        waterUnit: 'ml',
         createdAt: now,
         updatedAt: now,
       };
@@ -172,6 +187,7 @@ export const userService = {
     return {
       userId: row.user_id,
       visibleNutrients: JSON.parse(row.visible_nutrients) as NutrientKey[],
+      waterUnit: (row.water_unit || 'ml') as WaterUnit,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };

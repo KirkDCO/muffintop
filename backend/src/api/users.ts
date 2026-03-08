@@ -56,7 +56,7 @@ usersRouter.put(
   validateBody(updateNutrientPreferencesSchema),
   (req, res) => {
     const userId = parseInt(req.params.userId as string, 10);
-    const preferences = userService.setPreferences(userId, req.body.visibleNutrients);
+    const preferences = userService.setPreferences(userId, req.body.visibleNutrients, req.body.waterUnit);
     res.json(preferences);
   }
 );

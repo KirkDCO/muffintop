@@ -11,6 +11,7 @@ A self-hosted calorie and nutrition tracker with multi-user support, recipe mana
 - **Daily Targets** - Set calorie and nutrient goals with min/max directions, track progress with visual indicators
 - **Weight Tracking** - Log body weight in kg or lbs, view trends over time
 - **Activity Logging** - Record exercise calories to adjust daily calorie budget
+- **Intake Tracking** - Track daily water and caffeine intake with quick-add buttons, configurable targets, and unit preferences (mL/fl oz)
 - **Event Logging** - Mark significant events (diet changes, illness, travel) that appear on trend charts
 - **Trend Charts** - Visualize nutrition and weight trends with target comparison and colorblind-friendly indicators
 - **Multi-User** - Support multiple users with isolated data
@@ -137,6 +138,9 @@ All endpoints are prefixed with `/api/v1`.
 | `PUT /users/:id/targets` | Update targets |
 | `GET /users/:id/activity` | Get activity log |
 | `POST /users/:id/activity` | Log activity calories |
+| `GET /users/:id/intake?date=&type=` | Get intake entries (water/caffeine) |
+| `POST /users/:id/intake` | Log intake entry |
+| `DELETE /users/:id/intake/:entryId` | Delete intake entry |
 | `GET /users/:id/metrics/weight` | Get weight history |
 | `POST /users/:id/metrics/weight` | Log weight |
 | `GET /users/:id/events` | Get user events |
@@ -146,7 +150,7 @@ All endpoints are prefixed with `/api/v1`.
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md) for potential future features including copy meals, favorites, water tracking, barcode scanning, and more.
+See [ROADMAP.md](ROADMAP.md) for potential future features including copy meals, favorites, barcode scanning, and more.
 
 ## Production Deployment
 

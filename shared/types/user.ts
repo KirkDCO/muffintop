@@ -3,6 +3,7 @@
  */
 
 import type { NutrientKey } from './nutrients.js';
+import type { WaterUnit } from './intake.js';
 
 export interface User {
   id: number;
@@ -21,11 +22,13 @@ export interface CreateUserInput {
 
 export interface UpdateNutrientPreferencesInput {
   visibleNutrients: NutrientKey[];
+  waterUnit?: WaterUnit;
 }
 
 export interface NutrientPreferences {
   userId: number;
   visibleNutrients: NutrientKey[];
+  waterUnit: WaterUnit;
   createdAt: string;
   updatedAt: string;
 }

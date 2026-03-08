@@ -20,6 +20,16 @@ const nutrientTargetSchema = z.object({
 // Map of nutrient keys to targets
 const nutrientTargetsSchema = z.record(nutrientKeySchema, nutrientTargetSchema).optional();
 
+// Intake targets (water, caffeine)
+const intakeTargetSchema = z.object({
+  value: z.number().min(0, 'Target value must be non-negative'),
+  direction: targetDirectionSchema,
+});
+
+const intakeTargetsSchema = z
+  .record(z.enum(['water', 'caffeine']), intakeTargetSchema)
+  .optional();
+
 export const createDailyTargetSchema = z.object({
   basalCalories: z
     .number()
@@ -27,6 +37,7 @@ export const createDailyTargetSchema = z.object({
     .min(500, 'Basal calories must be at least 500')
     .max(10000, 'Basal calories cannot exceed 10000'),
   nutrientTargets: nutrientTargetsSchema,
+  intakeTargets: intakeTargetsSchema,
 });
 
 export const updateDailyTargetSchema = z.object({
@@ -37,6 +48,7 @@ export const updateDailyTargetSchema = z.object({
     .max(10000, 'Basal calories cannot exceed 10000')
     .optional(),
   nutrientTargets: nutrientTargetsSchema,
+  intakeTargets: intakeTargetsSchema,
 });
 
 export type CreateDailyTargetInput = z.infer<typeof createDailyTargetSchema>;

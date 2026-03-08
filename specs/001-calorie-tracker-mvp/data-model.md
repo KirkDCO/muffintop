@@ -82,13 +82,24 @@
       │               └─────────────────┘
       │
       │               ┌─────────────────┐
-      └──────────────<│   UserEvent     │
+      ├──────────────<│   UserEvent     │
+      │               ├─────────────────┤
+      │               │ id (PK)         │
+      │               │ user_id (FK)    │
+      │               │ event_date      │
+      │               │ description     │
+      │               │ color           │
+      │               │ created_at      │
+      │               └─────────────────┘
+      │
+      │               ┌─────────────────┐
+      └──────────────<│   IntakeLog     │
                       ├─────────────────┤
                       │ id (PK)         │
                       │ user_id (FK)    │
-                      │ event_date      │
-                      │ description     │
-                      │ color           │
+                      │ log_date        │
+                      │ intake_type     │
+                      │ amount          │
                       │ created_at      │
                       └─────────────────┘
 ```
@@ -250,14 +261,16 @@ User's nutrient goals and basal expenditure.
 | user_id | INTEGER | FK → User, NOT NULL, UNIQUE | Owner (one per user) |
 | basal_calories | INTEGER | NOT NULL | Daily basal expenditure (kcal) |
 | nutrient_targets | TEXT | NULL | JSON object with nutrient targets |
+| intake_targets | TEXT | NOT NULL, DEFAULT '{}' | JSON object with intake targets |
 | created_at | TEXT | NOT NULL | ISO 8601 timestamp |
 | updated_at | TEXT | NOT NULL | ISO 8601 timestamp |
 
 **Notes**:
 - One record per user (UNIQUE constraint)
 - `nutrient_targets` is JSON: `{ "protein": { "value": 150, "direction": "min" }, ... }`
+- `intake_targets` is JSON: `{ "water": { "value": 2000, "direction": "min" }, "caffeine": { "value": 400, "direction": "max" } }`
 - Direction can be 'min' (try to reach) or 'max' (stay under)
-- Supports all 17 tracked nutrients
+- Supports all 17 tracked nutrients plus water and caffeine intake targets
 
 ### ActivityLog
 
@@ -312,6 +325,28 @@ Significant events for correlation with nutrition/weight trends.
 - Events display as markers on trend charts
 - Useful for tracking diet changes, illness, travel, etc.
 
+### IntakeLog
+
+Cumulative intake tracking for water and caffeine.
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| id | INTEGER | PK, AUTO | Unique identifier |
+| user_id | INTEGER | FK → User, NOT NULL | Owner |
+| log_date | TEXT | NOT NULL | ISO 8601 date (YYYY-MM-DD) |
+| intake_type | TEXT | NOT NULL | 'water' or 'caffeine' |
+| amount | REAL | NOT NULL, > 0 | Amount (mL for water, mg for caffeine) |
+| created_at | TEXT | NOT NULL | ISO 8601 timestamp |
+
+**Notes**:
+- Multiple entries per user per day per type (cumulative, not upsert)
+- Water is always stored in mL internally; display converts to fl oz if preferred
+- Caffeine stored in mg
+- Indexed on (user_id, log_date, intake_type)
+- Intake targets are stored in DailyTarget.intake_targets as JSON:
+  `{ "water": { "value": 2000, "direction": "min" }, "caffeine": { "value": 400, "direction": "max" } }`
+- Water unit preference stored in UserNutrientPreferences.water_unit ('ml' or 'fl_oz')
+
 ## Indexes
 
 ```sql
@@ -333,6 +368,9 @@ CREATE UNIQUE INDEX idx_body_metric_user_date ON body_metric(user_id, metric_dat
 
 -- User events
 CREATE INDEX idx_user_event_user_date ON user_event(user_id, event_date);
+
+-- Intake tracking
+CREATE INDEX idx_intake_log_user_date_type ON intake_log(user_id, log_date, intake_type);
 ```
 
 ## Validation Rules
@@ -356,6 +394,11 @@ CREATE INDEX idx_user_event_user_date ON user_event(user_id, event_date);
 ### Body Metrics
 - `weight_value` must be between 20 and 1000 (supports kg or lb)
 - `weight_unit` must be 'kg' or 'lb'
+
+### Intake Logging
+- `intake_type` must be 'water' or 'caffeine'
+- `amount` must be > 0 and <= 10000
+- `log_date` must be valid ISO 8601 date
 
 ## State Transitions
 

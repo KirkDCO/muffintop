@@ -1,6 +1,6 @@
 import { getDb } from '../db/connection.js';
 import { NotFoundError } from '../middleware/error-handler.js';
-import type { DailyTarget, NutrientTarget, NutrientKey } from '@muffintop/shared/types';
+import type { DailyTarget, NutrientTarget, NutrientKey, IntakeType, IntakeTarget } from '@muffintop/shared/types';
 import type { CreateDailyTargetInput, UpdateDailyTargetInput } from '../models/daily-target.js';
 
 interface TargetRow {
@@ -8,12 +8,14 @@ interface TargetRow {
   user_id: number;
   basal_calories: number;
   nutrient_targets: string;
+  intake_targets: string;
   created_at: string;
   updated_at: string;
 }
 
 function rowToTarget(row: TargetRow): DailyTarget {
   let nutrientTargets: Partial<Record<NutrientKey, NutrientTarget>> = {};
+  let intakeTargets: Partial<Record<IntakeType, IntakeTarget>> = {};
 
   try {
     nutrientTargets = JSON.parse(row.nutrient_targets || '{}');
@@ -21,10 +23,17 @@ function rowToTarget(row: TargetRow): DailyTarget {
     nutrientTargets = {};
   }
 
+  try {
+    intakeTargets = JSON.parse(row.intake_targets || '{}');
+  } catch {
+    intakeTargets = {};
+  }
+
   return {
     id: row.id,
     basalCalories: row.basal_calories,
     nutrientTargets,
+    intakeTargets,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -39,7 +48,7 @@ export const targetService = {
     const db = getDb();
     const row = db
       .prepare(
-        'SELECT id, user_id, basal_calories, nutrient_targets, created_at, updated_at FROM daily_target WHERE user_id = ?'
+        'SELECT id, user_id, basal_calories, nutrient_targets, intake_targets, created_at, updated_at FROM daily_target WHERE user_id = ?'
       )
       .get(userId) as TargetRow | undefined;
 
@@ -52,15 +61,17 @@ export const targetService = {
   create(userId: number, input: CreateDailyTargetInput): DailyTarget {
     const db = getDb();
     const nutrientTargetsJson = JSON.stringify(input.nutrientTargets || {});
+    const intakeTargetsJson = JSON.stringify(input.intakeTargets || {});
 
     db.prepare(
-      `INSERT INTO daily_target (user_id, basal_calories, nutrient_targets)
-       VALUES (?, ?, ?)
+      `INSERT INTO daily_target (user_id, basal_calories, nutrient_targets, intake_targets)
+       VALUES (?, ?, ?, ?)
        ON CONFLICT(user_id) DO UPDATE SET
          basal_calories = excluded.basal_calories,
          nutrient_targets = excluded.nutrient_targets,
+         intake_targets = excluded.intake_targets,
          updated_at = datetime('now')`
-    ).run(userId, input.basalCalories, nutrientTargetsJson);
+    ).run(userId, input.basalCalories, nutrientTargetsJson, intakeTargetsJson);
 
     return this.getByUserId(userId)!;
   },
@@ -93,6 +104,17 @@ export const targetService = {
         }
       }
       updates.push('nutrient_targets = ?');
+      params.push(JSON.stringify(merged));
+    }
+
+    if (input.intakeTargets !== undefined) {
+      const merged = { ...existing.intakeTargets, ...input.intakeTargets };
+      for (const key of Object.keys(merged)) {
+        if (merged[key as IntakeType] === null || merged[key as IntakeType] === undefined) {
+          delete merged[key as IntakeType];
+        }
+      }
+      updates.push('intake_targets = ?');
       params.push(JSON.stringify(merged));
     }
 

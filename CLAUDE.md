@@ -107,6 +107,7 @@ npm run build:prod       # Production build
 
 ## Recent Features
 
+- Water and caffeine intake tracking with cumulative logging, quick-add buttons, and configurable targets
 - Event logging for tracking life events on trend charts
 - Direction-aware nutrient targets (min/max)
 - Colorblind-friendly trend chart fills (blue/orange)

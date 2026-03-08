@@ -10,6 +10,8 @@ import { FoodLogEntry } from '../components/FoodLogEntry';
 import { RecentFoods } from '../components/RecentFoods';
 import { LogFoodModal } from '../components/LogFoodModal';
 import { ActivityInput } from '../components/ActivityInput';
+import { IntakeInput } from '../components/IntakeInput';
+import { useNutrientPreferences } from '../hooks/useNutrientPreferences';
 import type { CreateFoodLogInput, MealCategory } from '@muffintop/shared/types';
 
 function getToday(): string {
@@ -43,6 +45,7 @@ export function Dashboard() {
   const { data: recentData } = useRecentFoods(getToday());
   const { data: targetData } = useTargets();
   const { data: activityData } = useActivity(selectedDate);
+  const { data: preferencesData } = useNutrientPreferences(currentUser?.id ?? null);
   const createFoodLog = useCreateFoodLog();
   const updateFoodLog = useUpdateFoodLog();
   const deleteFoodLog = useDeleteFoodLog();
@@ -128,9 +131,25 @@ export function Dashboard() {
       {/* Activity input - shows if targets are set */}
       {target && <ActivityInput date={selectedDate} basalCalories={target.basalCalories} />}
 
+      {/* Intake inputs - show only when targets are set */}
+      {target?.intakeTargets?.water && (
+        <IntakeInput
+          date={selectedDate}
+          intakeType="water"
+          target={target.intakeTargets.water}
+          waterUnit={preferencesData?.waterUnit}
+        />
+      )}
+      {target?.intakeTargets?.caffeine && (
+        <IntakeInput
+          date={selectedDate}
+          intakeType="caffeine"
+          target={target.intakeTargets.caffeine}
+        />
+      )}
+
       <DailySummary
         entries={entries}
-        date={selectedDate}
         target={target}
         activityCalories={activityCalories}
       />

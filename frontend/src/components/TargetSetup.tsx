@@ -2,17 +2,27 @@ import { useState, useEffect } from 'react';
 import {
   NUTRIENT_REGISTRY,
   DEFAULT_TARGET_DIRECTIONS,
+  DEFAULT_INTAKE_DIRECTIONS,
   type NutrientKey,
   type NutrientTarget,
   type TargetDirection,
+  type IntakeType,
+  type IntakeTarget,
+  type WaterUnit,
+  mlToFlOz,
+  flOzToMl,
 } from '@muffintop/shared/types';
 
 interface TargetSetupProps {
   selectedNutrients: NutrientKey[];
   basalCalories: number;
   nutrientTargets: Partial<Record<NutrientKey, NutrientTarget>>;
+  intakeTargets: Partial<Record<IntakeType, IntakeTarget>>;
+  waterUnit: WaterUnit;
   onBasalChange: (calories: number) => void;
   onTargetsChange: (targets: Partial<Record<NutrientKey, NutrientTarget>>) => void;
+  onIntakeTargetsChange: (targets: Partial<Record<IntakeType, IntakeTarget>>) => void;
+  onWaterUnitChange: (unit: WaterUnit) => void;
   disabled?: boolean;
 }
 
@@ -20,8 +30,12 @@ export function TargetSetup({
   selectedNutrients,
   basalCalories,
   nutrientTargets,
+  intakeTargets,
+  waterUnit,
   onBasalChange,
   onTargetsChange,
+  onIntakeTargetsChange,
+  onWaterUnitChange,
   disabled = false,
 }: TargetSetupProps) {
   // Local state for basal calories to allow clearing before entering new values
@@ -61,6 +75,45 @@ export function TargetSetup({
     if (current?.value) {
       handleTargetChange(key, current.value, direction);
     }
+  };
+
+  const handleIntakeValueChange = (type: IntakeType, valueStr: string) => {
+    const newTargets = { ...intakeTargets };
+    if (!valueStr) {
+      delete newTargets[type];
+    } else {
+      let value = parseFloat(valueStr);
+      // If water and fl_oz, convert display value to mL for storage
+      if (type === 'water' && waterUnit === 'fl_oz') {
+        value = flOzToMl(value);
+      }
+      const direction = newTargets[type]?.direction || DEFAULT_INTAKE_DIRECTIONS[type];
+      newTargets[type] = { value, direction };
+    }
+    onIntakeTargetsChange(newTargets);
+  };
+
+  const handleIntakeDirectionChange = (type: IntakeType, direction: TargetDirection) => {
+    const current = intakeTargets[type];
+    if (current?.value) {
+      const newTargets = { ...intakeTargets };
+      newTargets[type] = { value: current.value, direction };
+      onIntakeTargetsChange(newTargets);
+    }
+  };
+
+  const handleWaterUnitSwitch = (newUnit: WaterUnit) => {
+    onWaterUnitChange(newUnit);
+  };
+
+  // Display value for water target (convert from internal mL to display unit)
+  const getWaterDisplayValue = (): string => {
+    const wt = intakeTargets.water;
+    if (!wt?.value) return '';
+    if (waterUnit === 'fl_oz') {
+      return String(Math.round(mlToFlOz(wt.value)));
+    }
+    return String(Math.round(wt.value));
   };
 
   return (
@@ -133,6 +186,69 @@ export function TargetSetup({
           </div>
         </div>
       )}
+
+      <div className="intake-targets-section">
+          <h4>Intake Targets (optional)</h4>
+          <p className="helper-text">
+            Set daily intake targets for water and caffeine tracking.
+          </p>
+
+          <div className="targets-list">
+            <div className="nutrient-target-row">
+              <span className="nutrient-name">Water</span>
+              <input
+                type="number"
+                value={getWaterDisplayValue()}
+                onChange={(e) => handleIntakeValueChange('water', e.target.value)}
+                placeholder="No target"
+                min={0}
+                disabled={disabled}
+                className="target-input"
+              />
+              <select
+                value={waterUnit}
+                onChange={(e) => handleWaterUnitSwitch(e.target.value as WaterUnit)}
+                disabled={disabled}
+                className="direction-select"
+              >
+                <option value="ml">mL</option>
+                <option value="fl_oz">fl oz</option>
+              </select>
+              <select
+                value={intakeTargets.water?.direction || DEFAULT_INTAKE_DIRECTIONS.water}
+                onChange={(e) => handleIntakeDirectionChange('water', e.target.value as TargetDirection)}
+                disabled={disabled || !intakeTargets.water?.value}
+                className="direction-select"
+              >
+                <option value="min">Min (reach)</option>
+                <option value="max">Max (limit)</option>
+              </select>
+            </div>
+
+            <div className="nutrient-target-row">
+              <span className="nutrient-name">Caffeine</span>
+              <input
+                type="number"
+                value={intakeTargets.caffeine?.value || ''}
+                onChange={(e) => handleIntakeValueChange('caffeine', e.target.value)}
+                placeholder="No target"
+                min={0}
+                disabled={disabled}
+                className="target-input"
+              />
+              <span className="unit">mg</span>
+              <select
+                value={intakeTargets.caffeine?.direction || DEFAULT_INTAKE_DIRECTIONS.caffeine}
+                onChange={(e) => handleIntakeDirectionChange('caffeine', e.target.value as TargetDirection)}
+                disabled={disabled || !intakeTargets.caffeine?.value}
+                className="direction-select"
+              >
+                <option value="min">Min (reach)</option>
+                <option value="max">Max (limit)</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
       <style>{`
         .target-setup {
@@ -207,6 +323,14 @@ export function TargetSetup({
         }
         .direction-select:disabled {
           opacity: 0.5;
+        }
+        .intake-targets-section {
+          border-top: 1px solid #444;
+          padding-top: 1rem;
+          margin-top: 1rem;
+        }
+        .intake-targets-section h4 {
+          margin: 0 0 0.5rem 0;
         }
       `}</style>
     </div>

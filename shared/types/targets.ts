@@ -3,6 +3,7 @@
  */
 
 import type { NutrientKey } from './nutrients.js';
+import type { IntakeType, IntakeTarget } from './intake.js';
 
 /**
  * Direction for a nutrient target
@@ -50,6 +51,7 @@ export interface DailyTarget {
   id: number;
   basalCalories: number;
   nutrientTargets: Partial<Record<NutrientKey, NutrientTarget>>;
+  intakeTargets: Partial<Record<IntakeType, IntakeTarget>>;
   createdAt: string;
   updatedAt: string;
 }
@@ -60,6 +62,7 @@ export interface DailyTarget {
 export interface CreateDailyTargetInput {
   basalCalories: number;
   nutrientTargets?: Partial<Record<NutrientKey, NutrientTarget>>;
+  intakeTargets?: Partial<Record<IntakeType, IntakeTarget>>;
 }
 
 /**
@@ -68,6 +71,7 @@ export interface CreateDailyTargetInput {
 export interface UpdateDailyTargetInput {
   basalCalories?: number;
   nutrientTargets?: Partial<Record<NutrientKey, NutrientTarget>>;
+  intakeTargets?: Partial<Record<IntakeType, IntakeTarget>>;
 }
 
 /**

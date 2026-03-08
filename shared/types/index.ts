@@ -13,3 +13,4 @@ export * from './metrics.js';
 export * from './stats.js';
 export * from './api.js';
 export * from './events.js';
+export * from './intake.js';

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useFoodDetail } from '../hooks/useFoodSearch';
 import { useCustomFood } from '../hooks/useCustomFoods';
 import { useRecipe } from '../hooks/useRecipes';
@@ -41,6 +41,7 @@ export function PortionSelector({
   const [selectedPortionId, setSelectedPortionId] = useState<string>(isServingsMode ? 'servings' : 'grams');
   const [manualValue, setManualValue] = useState<string>(String(initialValue));
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  const lastReportedRef = useRef<{ value: number; display: string } | null>(null);
 
   // Build portion options based on food type
   const portionOptions: PortionOption[] = [];
@@ -124,10 +125,8 @@ export function PortionSelector({
     }
   }, [fdcId, foodDetail, customFoodDetail, initialDisplay, hasUserInteracted]);
 
-  // Calculate value when amount or portion changes - only after user interaction
+  // Calculate value when amount or portion changes
   useEffect(() => {
-    if (!hasUserInteracted) return;
-
     const selectedPortion = portionOptions.find(p => p.id === selectedPortionId);
     const amountNum = parseFloat(amount) || 0;
     const manualNum = parseFloat(manualValue) || 0;
@@ -149,8 +148,13 @@ export function PortionSelector({
       displayQty = isServingsMode ? `${manualNum} serving(s)` : `${manualNum}g`;
     }
 
+    // Dedup: skip if value and display are unchanged from last reported
+    const last = lastReportedRef.current;
+    if (last && last.value === calculatedValue && last.display === displayQty) return;
+
+    lastReportedRef.current = { value: calculatedValue, display: displayQty };
     onChange(calculatedValue, displayQty);
-  }, [hasUserInteracted, amount, selectedPortionId, manualValue, portionOptions.length, isServingsMode]);
+  }, [amount, selectedPortionId, manualValue, portionOptions.length, isServingsMode]);
 
   // Calculate display value for the "= X" label
   const selectedPortion = portionOptions.find(p => p.id === selectedPortionId);

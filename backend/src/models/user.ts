@@ -17,6 +17,7 @@ export type CreateUserInput = z.infer<typeof createUserSchema>;
 
 export const updateNutrientPreferencesSchema = z.object({
   visibleNutrients: z.array(nutrientKeySchema).min(1, 'At least one nutrient must be selected').max(17),
+  waterUnit: z.enum(['ml', 'fl_oz']).optional(),
 });
 
 export type UpdateNutrientPreferencesInput = z.infer<typeof updateNutrientPreferencesSchema>;

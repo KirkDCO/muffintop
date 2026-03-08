@@ -416,3 +416,20 @@ Nutrient targets now support direction ('min' or 'max'):
 
 ### Weight Unit Preference
 Users can log weight in either kg or lb, with automatic conversion for display.
+
+### Intake Tracking (Water & Caffeine)
+Users can track daily water and caffeine intake separately from the food log, with
+cumulative logging (multiple entries per day) and configurable targets.
+
+- **FR-031**: Users can set daily water and caffeine intake targets in Settings, with
+  min/max direction (water defaults to 'min', caffeine defaults to 'max').
+- **FR-032**: Intake cards appear on the Dashboard only when a target is set for that
+  intake type (same visibility pattern as ActivityInput).
+- **FR-033**: Users can add intake via quick-add buttons (water: glass/bottle sizes;
+  caffeine: coffee/tea/energy drink presets) or a custom amount input.
+- **FR-034**: Users can view and delete individual intake entries via an expandable
+  history section on each intake card.
+- **FR-035**: Water intake supports user-selectable display units (mL or fl oz),
+  configured in Settings. Internal storage is always in mL.
+- **FR-036**: Progress toward intake targets is shown via the ProgressIndicator
+  component with direction-aware coloring.
