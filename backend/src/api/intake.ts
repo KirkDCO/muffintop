@@ -13,7 +13,7 @@ intakeRouter.use(requireUser);
  * GET /users/:userId/intake - Get intake entries with optional filtering
  */
 intakeRouter.get('/', validateQuery(intakeQuerySchema), (req, res) => {
-  const query = req.query as { date?: string; type?: 'water' | 'caffeine' };
+  const query = req.query as { date?: string; type?: 'water' | 'caffeine' | 'alcohol' };
   const result = intakeService.getByQuery(req.userId!, query);
   res.json(result);
 });

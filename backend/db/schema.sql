@@ -322,7 +322,7 @@ CREATE TABLE IF NOT EXISTS intake_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
   log_date TEXT NOT NULL,
-  intake_type TEXT NOT NULL CHECK (intake_type IN ('water', 'caffeine')),
+  intake_type TEXT NOT NULL CHECK (intake_type IN ('water', 'caffeine', 'alcohol')),
   amount REAL NOT NULL CHECK (amount > 0),
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

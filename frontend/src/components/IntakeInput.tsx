@@ -36,6 +36,13 @@ function getQuickAddOptions(intakeType: IntakeType, waterUnit: WaterUnit): Quick
       { label: '1L bottle', amount: 1000 },
     ];
   }
+  if (intakeType === 'alcohol') {
+    return [
+      { label: 'Beer', amount: 1 },
+      { label: 'Wine (glass)', amount: 1 },
+      { label: 'Shot / Cocktail', amount: 1 },
+    ];
+  }
   // caffeine
   return [
     { label: 'Coffee (95mg)', amount: 95 },
@@ -48,6 +55,9 @@ function formatAmount(amount: number, intakeType: IntakeType, waterUnit: WaterUn
   if (intakeType === 'water' && waterUnit === 'fl_oz') {
     return `${mlToFlOz(amount).toFixed(1)} fl oz`;
   }
+  if (intakeType === 'alcohol') {
+    return `${amount % 1 === 0 ? amount : amount.toFixed(1)} drink${amount === 1 ? '' : 's'}`;
+  }
   const unit = intakeType === 'water' ? 'mL' : 'mg';
   return `${Math.round(amount)} ${unit}`;
 }
@@ -56,11 +66,16 @@ function getUnit(intakeType: IntakeType, waterUnit: WaterUnit): string {
   if (intakeType === 'water') {
     return waterUnit === 'fl_oz' ? ' fl oz' : ' mL';
   }
+  if (intakeType === 'alcohol') {
+    return ' drinks';
+  }
   return ' mg';
 }
 
 function getLabel(intakeType: IntakeType): string {
-  return intakeType === 'water' ? 'Water' : 'Caffeine';
+  if (intakeType === 'water') return 'Water';
+  if (intakeType === 'alcohol') return 'Alcohol';
+  return 'Caffeine';
 }
 
 export function IntakeInput({ date, intakeType, target, waterUnit = 'ml' }: IntakeInputProps) {
@@ -168,7 +183,7 @@ export function IntakeInput({ date, intakeType, target, waterUnit = 'ml' }: Inta
           onKeyDown={handleKeyDown}
           placeholder={`Custom${unit}`}
           min={0}
-          step={intakeType === 'water' ? (waterUnit === 'fl_oz' ? 1 : 50) : 5}
+          step={intakeType === 'water' ? (waterUnit === 'fl_oz' ? 1 : 50) : intakeType === 'alcohol' ? 0.5 : 5}
           className="custom-input"
         />
         <button

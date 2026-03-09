@@ -22,6 +22,7 @@ interface DateWindow {
 const INTAKE_DISPLAY: Record<IntakeType, { displayName: string; unit: string }> = {
   water: { displayName: 'Water', unit: 'ml' },
   caffeine: { displayName: 'Caffeine', unit: 'mg' },
+  alcohol: { displayName: 'Alcohol', unit: 'drinks' },
 };
 
 function isNutrientKey(key: string): key is NutrientKey {

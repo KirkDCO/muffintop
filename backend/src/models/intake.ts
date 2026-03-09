@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format');
 
-const intakeTypeSchema = z.enum(['water', 'caffeine']);
+const intakeTypeSchema = z.enum(['water', 'caffeine', 'alcohol']);
 
 export const createIntakeSchema = z.object({
   logDate: dateSchema,

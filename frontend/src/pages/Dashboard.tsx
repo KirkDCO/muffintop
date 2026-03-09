@@ -147,6 +147,13 @@ export function Dashboard() {
           target={target.intakeTargets.caffeine}
         />
       )}
+      {target?.intakeTargets?.alcohol && (
+        <IntakeInput
+          date={selectedDate}
+          intakeType="alcohol"
+          target={target.intakeTargets.alcohol}
+        />
+      )}
 
       <DailySummary
         entries={entries}

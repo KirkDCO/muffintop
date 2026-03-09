@@ -4,8 +4,8 @@
 
 import type { TargetDirection } from './targets.js';
 
-export type IntakeType = 'water' | 'caffeine';
-export const INTAKE_TYPES = ['water', 'caffeine'] as const;
+export type IntakeType = 'water' | 'caffeine' | 'alcohol';
+export const INTAKE_TYPES = ['water', 'caffeine', 'alcohol'] as const;
 export type WaterUnit = 'ml' | 'fl_oz';
 
 export interface IntakeEntry {
@@ -47,4 +47,5 @@ export function flOzToMl(flOz: number): number {
 export const DEFAULT_INTAKE_DIRECTIONS: Record<IntakeType, TargetDirection> = {
   water: 'min',
   caffeine: 'max',
+  alcohol: 'max',
 };

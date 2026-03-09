@@ -108,14 +108,8 @@ export const targetService = {
     }
 
     if (input.intakeTargets !== undefined) {
-      const merged = { ...existing.intakeTargets, ...input.intakeTargets };
-      for (const key of Object.keys(merged)) {
-        if (merged[key as IntakeType] === null || merged[key as IntakeType] === undefined) {
-          delete merged[key as IntakeType];
-        }
-      }
       updates.push('intake_targets = ?');
-      params.push(JSON.stringify(merged));
+      params.push(JSON.stringify(input.intakeTargets));
     }
 
     if (updates.length > 0) {

@@ -79,10 +79,11 @@ export function TargetSetup({
 
   const handleIntakeValueChange = (type: IntakeType, valueStr: string) => {
     const newTargets = { ...intakeTargets };
-    if (!valueStr) {
+    const parsed = parseFloat(valueStr);
+    if (valueStr === '' || isNaN(parsed) || parsed < 0) {
       delete newTargets[type];
     } else {
-      let value = parseFloat(valueStr);
+      let value = parsed;
       // If water and fl_oz, convert display value to mL for storage
       if (type === 'water' && waterUnit === 'fl_oz') {
         value = flOzToMl(value);
@@ -95,7 +96,7 @@ export function TargetSetup({
 
   const handleIntakeDirectionChange = (type: IntakeType, direction: TargetDirection) => {
     const current = intakeTargets[type];
-    if (current?.value) {
+    if (current !== undefined) {
       const newTargets = { ...intakeTargets };
       newTargets[type] = { value: current.value, direction };
       onIntakeTargetsChange(newTargets);
@@ -217,7 +218,7 @@ export function TargetSetup({
               <select
                 value={intakeTargets.water?.direction || DEFAULT_INTAKE_DIRECTIONS.water}
                 onChange={(e) => handleIntakeDirectionChange('water', e.target.value as TargetDirection)}
-                disabled={disabled || !intakeTargets.water?.value}
+                disabled={disabled || intakeTargets.water === undefined}
                 className="direction-select"
               >
                 <option value="min">Min (reach)</option>
@@ -229,7 +230,7 @@ export function TargetSetup({
               <span className="nutrient-name">Caffeine</span>
               <input
                 type="number"
-                value={intakeTargets.caffeine?.value || ''}
+                value={intakeTargets.caffeine?.value ?? ''}
                 onChange={(e) => handleIntakeValueChange('caffeine', e.target.value)}
                 placeholder="No target"
                 min={0}
@@ -240,7 +241,31 @@ export function TargetSetup({
               <select
                 value={intakeTargets.caffeine?.direction || DEFAULT_INTAKE_DIRECTIONS.caffeine}
                 onChange={(e) => handleIntakeDirectionChange('caffeine', e.target.value as TargetDirection)}
-                disabled={disabled || !intakeTargets.caffeine?.value}
+                disabled={disabled || intakeTargets.caffeine === undefined}
+                className="direction-select"
+              >
+                <option value="min">Min (reach)</option>
+                <option value="max">Max (limit)</option>
+              </select>
+            </div>
+
+            <div className="nutrient-target-row">
+              <span className="nutrient-name">Alcohol</span>
+              <input
+                type="number"
+                value={intakeTargets.alcohol?.value ?? ''}
+                onChange={(e) => handleIntakeValueChange('alcohol', e.target.value)}
+                placeholder="No target"
+                min={0}
+                step={0.5}
+                disabled={disabled}
+                className="target-input"
+              />
+              <span className="unit">drinks</span>
+              <select
+                value={intakeTargets.alcohol?.direction || DEFAULT_INTAKE_DIRECTIONS.alcohol}
+                onChange={(e) => handleIntakeDirectionChange('alcohol', e.target.value as TargetDirection)}
+                disabled={disabled || intakeTargets.alcohol === undefined}
                 className="direction-select"
               >
                 <option value="min">Min (reach)</option>

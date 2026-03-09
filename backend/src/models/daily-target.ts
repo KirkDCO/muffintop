@@ -27,7 +27,7 @@ const intakeTargetSchema = z.object({
 });
 
 const intakeTargetsSchema = z
-  .record(z.enum(['water', 'caffeine']), intakeTargetSchema)
+  .record(z.enum(['water', 'caffeine', 'alcohol']), intakeTargetSchema)
   .optional();
 
 export const createDailyTargetSchema = z.object({
