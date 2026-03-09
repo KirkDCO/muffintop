@@ -417,22 +417,27 @@ Nutrient targets now support direction ('min' or 'max'):
 ### Weight Unit Preference
 Users can log weight in either kg or lb, with automatic conversion for display.
 
-### Intake Tracking (Water & Caffeine)
-Users can track daily water and caffeine intake separately from the food log, with
-cumulative logging (multiple entries per day) and configurable targets.
+### Intake Tracking (Water, Caffeine & Alcohol)
+Users can track daily water, caffeine, and alcohol intake separately from the food log,
+with cumulative logging (multiple entries per day) and configurable targets.
 
-- **FR-031**: Users can set daily water and caffeine intake targets in Settings, with
-  min/max direction (water defaults to 'min', caffeine defaults to 'max').
+- **FR-031**: Users can set daily water, caffeine, and alcohol intake targets in
+  Settings, with min/max direction (water defaults to 'min'; caffeine and alcohol
+  default to 'max').
 - **FR-032**: Intake cards appear on the Dashboard only when a target is set for that
   intake type (same visibility pattern as ActivityInput).
 - **FR-033**: Users can add intake via quick-add buttons (water: glass/bottle sizes;
-  caffeine: coffee/tea/energy drink presets) or a custom amount input.
+  caffeine: coffee/tea/energy drink presets; alcohol: beer/wine glass/shot or cocktail)
+  or a custom amount input.
 - **FR-034**: Users can view and delete individual intake entries via an expandable
   history section on each intake card.
 - **FR-035**: Water intake supports user-selectable display units (mL or fl oz),
   configured in Settings. Internal storage is always in mL.
 - **FR-036**: Progress toward intake targets is shown via the ProgressIndicator
   component with direction-aware coloring.
+- **FR-042**: Alcohol intake is tracked in standard drink units (1 drink = 1 beer,
+  1 glass of wine, or 1 shot/cocktail). A target of 0 drinks is valid and represents
+  a sobriety goal.
 
 ### Event Analysis
 Users can statistically compare nutrient intake and food choices in the days leading
@@ -443,8 +448,9 @@ different before this type of event?"
   matching) or by individual event instance, with configurable date range and lookback
   window (1-7 days).
 - **FR-038**: System computes pre-event window means for selected metrics (any of the
-  17 tracked nutrients plus water and caffeine intake) and compares them against up to
-  100 randomly sampled non-overlapping baseline windows from the same date range.
+  17 tracked nutrients plus water, caffeine, and alcohol intake) and compares them
+  against up to 100 randomly sampled non-overlapping baseline windows from the same
+  date range.
 - **FR-039**: Nutrient comparison table displays mean, standard deviation, percent
   difference, and Cohen's d effect size for each selected metric, sorted by effect
   size magnitude. Metrics with |effect size| > 0.5 are highlighted.

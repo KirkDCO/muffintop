@@ -11,7 +11,7 @@ A self-hosted calorie and nutrition tracker with multi-user support, recipe mana
 - **Daily Targets** - Set calorie and nutrient goals with min/max directions, track progress with visual indicators
 - **Weight Tracking** - Log body weight in kg or lbs, view trends over time
 - **Activity Logging** - Record exercise calories to adjust daily calorie budget
-- **Intake Tracking** - Track daily water and caffeine intake with quick-add buttons, configurable targets, and unit preferences (mL/fl oz)
+- **Intake Tracking** - Track daily water (mL/fl oz), caffeine (mg), and alcohol (standard drinks) intake with quick-add buttons and configurable targets
 - **Event Logging** - Mark significant events (diet changes, illness, travel) that appear on trend charts
 - **Event Analysis** - Compare pre-event nutrient intake and food choices against baseline windows with effect size statistics
 - **Trend Charts** - Visualize nutrition and weight trends with target comparison and colorblind-friendly indicators
@@ -139,7 +139,7 @@ All endpoints are prefixed with `/api/v1`.
 | `PUT /users/:id/targets` | Update targets |
 | `GET /users/:id/activity` | Get activity log |
 | `POST /users/:id/activity` | Log activity calories |
-| `GET /users/:id/intake?date=&type=` | Get intake entries (water/caffeine) |
+| `GET /users/:id/intake?date=&type=` | Get intake entries (water/caffeine/alcohol) |
 | `POST /users/:id/intake` | Log intake entry |
 | `DELETE /users/:id/intake/:entryId` | Delete intake entry |
 | `GET /users/:id/metrics/weight` | Get weight history |
@@ -203,10 +203,24 @@ Log body weight and significant events that appear on trend charts.
 
 ![Weight and Event Tracking](screenshots/WeightAndEventTracking.png)
 
+### Intake Tracking
+Track daily water, caffeine, and alcohol intake with quick-add presets, progress bars, and an expandable entry history. Targets and units are configured in Settings.
+
+![Main Dashboard with Intake Tracking](screenshots/MainWithUnitTracking.png)
+
 ### Trend Charts
 Visualize nutrition and weight trends over customizable time periods with target comparison.
 
 ![Daily, Weekly & Long-term Trends](screenshots/DailyWeeklyLongTermTrends.png)
+
+### Event Analysis
+Select an event type and date range to compare nutrient intake and food choices in the days before each event against randomly sampled baseline windows.
+
+![Event Analysis](screenshots/EventAnalysis.png)
+
+Results show pre-event vs. baseline means, percent difference, and Cohen's d effect size for each metric, plus a food frequency table ranked by appearance difference.
+
+![Event Analysis Results](screenshots/AnalysisTables.png)
 
 ## Development
 

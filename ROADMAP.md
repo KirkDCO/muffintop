@@ -55,7 +55,7 @@ Save common meal combinations (e.g., "My usual breakfast") for one-click logging
 - Apply template to current day
 
 ### ~~8. Water/Hydration Tracking~~ ✅ Implemented
-Implemented as "Intake Tracking" covering both water and caffeine. See intake_log table, IntakeInput component, and intake API endpoints.
+Implemented as "Intake Tracking" covering water, caffeine, and alcohol (standard drinks). See intake_log table, IntakeInput component, and intake API endpoints.
 
 ### 9. Nutrient Alerts
 Warn when approaching or exceeding limits:
@@ -144,5 +144,5 @@ Based on user value and implementation effort:
 2. **Favorite Foods** - Simple to implement, speeds up logging
 3. **Weekly Reports** - Provides motivation and insights
 4. **Data Export** - Important for users who want their data
-5. ~~**Water Tracking**~~ ✅ Implemented (includes caffeine tracking)
+5. ~~**Water Tracking**~~ ✅ Implemented (includes caffeine and alcohol tracking)
 6. **Barcode Scanning** - Game-changer for logging speed (if mobile use is common)
