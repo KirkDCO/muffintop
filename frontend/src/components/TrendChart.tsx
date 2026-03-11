@@ -178,9 +178,9 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
 
     for (const point of data.nutrientData) {
       const d = new Date(point.date);
-      // Get week start (Sunday)
+      // Get week start (Sunday) using UTC methods to match UTC midnight date objects
       const weekStart = new Date(d);
-      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      weekStart.setUTCDate(weekStart.getUTCDate() - weekStart.getUTCDay());
       const weekKey = weekStart.toISOString().split('T')[0];
 
       if (!weeklyData.has(weekKey)) {
@@ -201,7 +201,7 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
     for (const w of data.weightData) {
       const d = new Date(w.date);
       const weekStart = new Date(d);
-      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      weekStart.setUTCDate(weekStart.getUTCDate() - weekStart.getUTCDay());
       const weekKey = weekStart.toISOString().split('T')[0];
       weeklyData.get(weekKey)?.weights.push(w);
     }

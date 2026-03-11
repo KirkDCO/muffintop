@@ -11,11 +11,13 @@ const dailyStatsQuerySchema = z.object({
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   days: z.coerce.number().int().min(1).max(90).default(7),
+  today: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 const trendQuerySchema = z.object({
   timeRange: z.enum(['week', 'month', '3months', '6months', 'year', 'lastyear', 'all']).default('month'),
   nutrient: z.string().optional(),
+  today: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 // All routes require user context
@@ -30,13 +32,13 @@ router.use(requireUser);
  */
 router.get('/daily', validateQuery(dailyStatsQuerySchema), (req, res) => {
   const query = req.query as unknown as z.infer<typeof dailyStatsQuerySchema>;
-  const { startDate, endDate, days } = query;
+  const { startDate, endDate, days, today } = query;
 
   let result;
   if (startDate && endDate) {
     result = statsService.getDailySummaries(req.userId!, startDate, endDate);
   } else {
-    result = statsService.getDailySummariesForLastDays(req.userId!, days);
+    result = statsService.getDailySummariesForLastDays(req.userId!, days, today);
   }
 
   res.json(result);
@@ -51,12 +53,13 @@ router.get('/daily', validateQuery(dailyStatsQuerySchema), (req, res) => {
  */
 router.get('/trends', validateQuery(trendQuerySchema), (req, res) => {
   const query = req.query as unknown as z.infer<typeof trendQuerySchema>;
-  const { timeRange, nutrient } = query;
+  const { timeRange, nutrient, today } = query;
 
   const result = statsService.getTrendData(
     req.userId!,
     timeRange as TrendTimeRange,
-    (nutrient as NutrientKey) || 'calories'
+    (nutrient as NutrientKey) || 'calories',
+    today
   );
 
   res.json(result);

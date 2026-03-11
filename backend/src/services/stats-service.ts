@@ -152,7 +152,7 @@ export function getDailySummaries(
         activityCalories: activityByDate.get(dateStr) ?? 0,
       });
     }
-    current.setDate(current.getDate() + 1);
+    current.setUTCDate(current.getUTCDate() + 1);
   }
 
   return {
@@ -167,11 +167,12 @@ export function getDailySummaries(
  */
 export function getDailySummariesForLastDays(
   userId: number,
-  days: number = 7
+  days: number = 7,
+  today?: string
 ): DailyStatsResult {
-  const endDate = new Date().toISOString().split('T')[0];
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - (days - 1));
+  const endDate = today ?? new Date().toISOString().split('T')[0];
+  const startDate = new Date(endDate);
+  startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
   const startDateStr = startDate.toISOString().split('T')[0];
 
   return getDailySummaries(userId, startDateStr, endDate);
@@ -180,48 +181,48 @@ export function getDailySummariesForLastDays(
 /**
  * Calculate date range based on time range selection
  */
-function getDateRangeForTimeRange(timeRange: TrendTimeRange): { startDate: string; endDate: string } {
-  const now = new Date();
-  const today = now.toISOString().split('T')[0];
+function getDateRangeForTimeRange(timeRange: TrendTimeRange, today?: string): { startDate: string; endDate: string } {
+  const now = today ? new Date(today) : new Date();
+  const todayStr = today ?? now.toISOString().split('T')[0];
   let startDate: Date;
 
   switch (timeRange) {
     case 'week':
       startDate = new Date(now);
-      startDate.setDate(startDate.getDate() - 6);
+      startDate.setUTCDate(startDate.getUTCDate() - 6);
       break;
     case 'month':
       startDate = new Date(now);
-      startDate.setDate(startDate.getDate() - 29);
+      startDate.setUTCDate(startDate.getUTCDate() - 29);
       break;
     case '3months':
       startDate = new Date(now);
-      startDate.setMonth(startDate.getMonth() - 3);
+      startDate.setUTCMonth(startDate.getUTCMonth() - 3);
       break;
     case '6months':
       startDate = new Date(now);
-      startDate.setMonth(startDate.getMonth() - 6);
+      startDate.setUTCMonth(startDate.getUTCMonth() - 6);
       break;
     case 'year':
-      startDate = new Date(now.getFullYear(), 0, 1); // Jan 1 of current year
+      startDate = new Date(Date.UTC(now.getUTCFullYear(), 0, 1)); // Jan 1 of current year
       break;
     case 'lastyear':
-      startDate = new Date(now.getFullYear() - 1, 0, 1); // Jan 1 of last year
+      startDate = new Date(Date.UTC(now.getUTCFullYear() - 1, 0, 1)); // Jan 1 of last year
       return {
         startDate: startDate.toISOString().split('T')[0],
-        endDate: new Date(now.getFullYear() - 1, 11, 31).toISOString().split('T')[0], // Dec 31 of last year
+        endDate: new Date(Date.UTC(now.getUTCFullYear() - 1, 11, 31)).toISOString().split('T')[0], // Dec 31 of last year
       };
     case 'all':
       startDate = new Date('2000-01-01'); // Far back enough to capture all data
       break;
     default:
       startDate = new Date(now);
-      startDate.setDate(startDate.getDate() - 29);
+      startDate.setUTCDate(startDate.getUTCDate() - 29);
   }
 
   return {
     startDate: startDate.toISOString().split('T')[0],
-    endDate: today,
+    endDate: todayStr,
   };
 }
 
@@ -239,10 +240,11 @@ function toKg(value: number, unit: WeightUnit): number {
 export function getTrendData(
   userId: number,
   timeRange: TrendTimeRange,
-  nutrient: NutrientKey = 'calories'
+  nutrient: NutrientKey = 'calories',
+  today?: string
 ): LongitudinalTrendResult {
   const db = getDb();
-  const { startDate, endDate } = getDateRangeForTimeRange(timeRange);
+  const { startDate, endDate } = getDateRangeForTimeRange(timeRange, today);
 
   // Get daily nutrient values for the selected nutrient
   const nutrientColumn = nutrientKeyToColumn(nutrient);
@@ -273,7 +275,7 @@ export function getTrendData(
       date: dateStr,
       value: nutrientByDate.get(dateStr) ?? null,
     });
-    current.setDate(current.getDate() + 1);
+    current.setUTCDate(current.getUTCDate() + 1);
   }
 
   // Get weight entries (sparse data - only dates with entries)

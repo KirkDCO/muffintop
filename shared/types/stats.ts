@@ -19,6 +19,7 @@ export interface DailyStatsQueryParams {
   startDate?: string;
   endDate?: string;
   days?: number;
+  today?: string;
 }
 
 // Longitudinal trend data types for analysis over time
