@@ -72,7 +72,7 @@ export function TargetSetup({
 
   const handleDirectionChange = (key: NutrientKey, direction: TargetDirection) => {
     const current = nutrientTargets[key];
-    if (current?.value) {
+    if (current !== undefined) {
       handleTargetChange(key, current.value, direction);
     }
   };
@@ -164,7 +164,7 @@ export function TargetSetup({
                   <span className="nutrient-name">{def.displayName}</span>
                   <input
                     type="number"
-                    value={current?.value || ''}
+                    value={current?.value ?? ''}
                     onChange={(e) => handleValueChange(key, e.target.value)}
                     placeholder="No target"
                     min={0}
@@ -175,7 +175,7 @@ export function TargetSetup({
                   <select
                     value={current?.direction || defaultDirection}
                     onChange={(e) => handleDirectionChange(key, e.target.value as TargetDirection)}
-                    disabled={disabled || !current?.value}
+                    disabled={disabled || current === undefined}
                     className="direction-select"
                   >
                     <option value="min">Min (reach)</option>

@@ -95,16 +95,8 @@ export const targetService = {
     }
 
     if (input.nutrientTargets !== undefined) {
-      // Merge with existing targets (allows partial updates)
-      const merged = { ...existing.nutrientTargets, ...input.nutrientTargets };
-      // Remove any null/undefined values (allows clearing targets)
-      for (const key of Object.keys(merged)) {
-        if (merged[key as NutrientKey] === null || merged[key as NutrientKey] === undefined) {
-          delete merged[key as NutrientKey];
-        }
-      }
       updates.push('nutrient_targets = ?');
-      params.push(JSON.stringify(merged));
+      params.push(JSON.stringify(input.nutrientTargets));
     }
 
     if (input.intakeTargets !== undefined) {
