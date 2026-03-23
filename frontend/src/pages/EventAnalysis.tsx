@@ -18,6 +18,7 @@ const ALL_METRICS: AnalysisMetricKey[] = [...ALL_NUTRIENT_KEYS, ...INTAKE_TYPES]
 function getMetricLabel(key: AnalysisMetricKey): string {
   if (key === 'water') return 'Water';
   if (key === 'caffeine') return 'Caffeine';
+  if (key === 'alcohol') return 'Alcohol';
   return NUTRIENT_REGISTRY[key as NutrientKey].displayName;
 }
 
