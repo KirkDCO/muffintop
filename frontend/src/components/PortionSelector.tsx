@@ -109,6 +109,13 @@ export function PortionSelector({
 
         const unitPart = match[2].trim();
 
+        // Detect raw gram entries for USDA foods (stored display format is "84g")
+        if (!isServingsMode && unitPart === 'g') {
+          setSelectedPortionId('grams');
+          setManualValue(String(parsedAmount));
+          return;
+        }
+
         // Find matching portion
         for (const portion of portions) {
           const portionLower = portion.description.toLowerCase();

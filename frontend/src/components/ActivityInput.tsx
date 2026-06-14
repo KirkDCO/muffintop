@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useActivity, useUpsertActivity } from '../hooks/useActivity';
+import { useActivitySettings } from '../hooks/useActivitySettings';
 
 interface ActivityInputProps {
   date: string;
@@ -9,6 +10,7 @@ interface ActivityInputProps {
 export function ActivityInput({ date, basalCalories }: ActivityInputProps) {
   const { data, isLoading } = useActivity(date);
   const upsertActivity = useUpsertActivity();
+  const { trackSeparately, setTrackSeparately } = useActivitySettings();
 
   const currentEntry = data?.entries?.[0];
   const [calories, setCalories] = useState(String(currentEntry?.activityCalories || 0));
@@ -68,38 +70,48 @@ export function ActivityInput({ date, basalCalories }: ActivityInputProps) {
       )}
       <div className="activity-header">
         <span className="activity-label">Activity Burned Today</span>
-        {isEditing ? (
-          <div className="activity-edit">
+        <div className="activity-right-group">
+          {isEditing ? (
+            <div className="activity-edit">
+              <input
+                type="number"
+                value={calories}
+                onChange={(e) => setCalories(e.target.value)}
+                onBlur={() => {
+                  const val = parseInt(calories, 10) || 0;
+                  setCalories(String(Math.max(0, val)));
+                }}
+                onKeyDown={handleKeyDown}
+                min={0}
+                max={10000}
+                autoFocus
+              />
+              <span className="unit">kcal</span>
+              <button
+                onClick={handleSave}
+                disabled={upsertActivity.isPending}
+                className="save-btn"
+              >
+                {upsertActivity.isPending ? '...' : 'Save'}
+              </button>
+              <button onClick={handleCancel} className="cancel-btn">
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button className="activity-value" onClick={() => setIsEditing(true)}>
+              {parseInt(calories, 10) > 0 ? `${calories} kcal` : 'Add activity'}
+            </button>
+          )}
+          <label className="track-separate-toggle">
             <input
-              type="number"
-              value={calories}
-              onChange={(e) => setCalories(e.target.value)}
-              onBlur={() => {
-                const val = parseInt(calories, 10) || 0;
-                setCalories(String(Math.max(0, val)));
-              }}
-              onKeyDown={handleKeyDown}
-              min={0}
-              max={10000}
-              autoFocus
+              type="checkbox"
+              checked={trackSeparately}
+              onChange={(e) => setTrackSeparately(e.target.checked)}
             />
-            <span className="unit">kcal</span>
-            <button
-              onClick={handleSave}
-              disabled={upsertActivity.isPending}
-              className="save-btn"
-            >
-              {upsertActivity.isPending ? '...' : 'Save'}
-            </button>
-            <button onClick={handleCancel} className="cancel-btn">
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <button className="activity-value" onClick={() => setIsEditing(true)}>
-            {parseInt(calories, 10) > 0 ? `${calories} kcal` : 'Add activity'}
-          </button>
-        )}
+            Track separately from baseline
+          </label>
+        </div>
       </div>
 
       <style>{`
@@ -138,8 +150,25 @@ export function ActivityInput({ date, basalCalories }: ActivityInputProps) {
           align-items: center;
           gap: 1rem;
         }
+        .activity-right-group {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 0.25rem;
+        }
         .activity-label {
           font-weight: 500;
+        }
+        .track-separate-toggle {
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+          font-size: 0.8rem;
+          color: #888;
+          cursor: pointer;
+        }
+        .track-separate-toggle input {
+          cursor: pointer;
         }
         .activity-value {
           background: none;

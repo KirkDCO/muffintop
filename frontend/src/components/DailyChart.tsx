@@ -8,8 +8,10 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  ReferenceLine,
 } from 'recharts';
 import { useDailyStats } from '../hooks/useDailyStats';
+import { useActivitySettings } from '../hooks/useActivitySettings';
 import type { DailyTarget, NutrientKey } from '@muffintop/shared/types';
 
 interface DailyChartProps {
@@ -50,6 +52,7 @@ export function DailyChart({ target }: DailyChartProps) {
 
   const [selectedMetric, setSelectedMetric] = useState<ChartMetric | null>(null);
   const { data, isLoading } = useDailyStats({ days: 7 });
+  const { trackSeparately } = useActivitySettings();
 
   // Set default metric when available metrics change
   useEffect(() => {
@@ -228,6 +231,16 @@ export function DailyChart({ target }: DailyChartProps) {
                 isAnimationActive={false}
               />
             )}
+
+            {/* Baseline-only reference line (basal calories without activity) */}
+            {trackSeparately && selectedMetric === 'calories' && hasTarget && (
+              <ReferenceLine
+                y={target!.basalCalories}
+                stroke="#60a5fa"
+                strokeDasharray="3 6"
+                strokeWidth={1.5}
+              />
+            )}
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -237,6 +250,11 @@ export function DailyChart({ target }: DailyChartProps) {
           Target: {chartData[0].target} {getUnit()}
           {selectedMetric === 'calories' && hasVaryingTarget && ' (varies with activity)'}
           {selectedMetric === 'calories' && !hasVaryingTarget && ` (${target!.basalCalories} base)`}
+          {trackSeparately && selectedMetric === 'calories' && (
+            <span style={{ color: '#60a5fa', marginLeft: '1rem' }}>
+              Baseline: {target!.basalCalories} {getUnit()}
+            </span>
+          )}
         </p>
       )}
 

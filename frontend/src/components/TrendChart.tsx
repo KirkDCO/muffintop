@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useActivitySettings } from '../hooks/useActivitySettings';
 import {
   ComposedChart,
   Area,
@@ -93,6 +94,7 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
   const [selectedNutrient, setSelectedNutrient] = useState<NutrientKey | null>(null);
   const [showWeight, setShowWeight] = useState(true);
   const [showEvents, setShowEvents] = useState(true);
+  const { trackSeparately } = useActivitySettings();
 
   // Set default nutrient when available nutrients change
   useEffect(() => {
@@ -534,6 +536,17 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
               />
             )}
 
+            {/* Baseline-only reference line (basal calories without activity) */}
+            {trackSeparately && showDynamicTarget && (
+              <ReferenceLine
+                yAxisId="nutrient"
+                y={data.nutrientTarget!}
+                stroke="#60a5fa"
+                strokeDasharray="3 6"
+                strokeWidth={1.5}
+              />
+            )}
+
             {/* Static target reference line for non-calorie nutrients */}
             {data.nutrientTarget && selectedNutrient !== 'calories' && (
               <ReferenceLine
@@ -595,6 +608,11 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
         {data.nutrientTarget && (
           <span className="legend-item" style={{ color: '#888' }}>
             {'- - -'} Target {selectedNutrient === 'calories' ? '(basal + activity)' : `(${data.nutrientTarget} ${nutrientConfig.unit})`}
+          </span>
+        )}
+        {trackSeparately && showDynamicTarget && (
+          <span className="legend-item" style={{ color: '#60a5fa' }}>
+            {'- -'} Baseline ({data.nutrientTarget} {nutrientConfig.unit})
           </span>
         )}
         {showWeight && hasWeightData && (
