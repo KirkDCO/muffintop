@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useActivity, useUpsertActivity } from '../hooks/useActivity';
-import { useActivitySettings } from '../hooks/useActivitySettings';
+import { useActivitySettings } from '../providers/ActivitySettingsProvider';
 
 interface ActivityInputProps {
   date: string;

@@ -11,7 +11,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { useDailyStats } from '../hooks/useDailyStats';
-import { useActivitySettings } from '../hooks/useActivitySettings';
+import { useActivitySettings } from '../providers/ActivitySettingsProvider';
 import type { DailyTarget, NutrientKey } from '@muffintop/shared/types';
 
 interface DailyChartProps {
@@ -241,18 +241,41 @@ export function DailyChart({ target }: DailyChartProps) {
                 strokeWidth={1.5}
               />
             )}
+
+            {/* Activity-only calories line */}
+            {trackSeparately && selectedMetric === 'calories' && hasTarget && (
+              <Line
+                type="monotone"
+                dataKey="activityCalories"
+                stroke="#ff8c00"
+                strokeWidth={1.5}
+                dot={false}
+                connectNulls={true}
+                isAnimationActive={false}
+              />
+            )}
           </ComposedChart>
         </ResponsiveContainer>
       </div>
 
       {hasTarget && (
         <p className="chart-legend">
-          Target: {chartData[0].target} {getUnit()}
-          {selectedMetric === 'calories' && hasVaryingTarget && ' (varies with activity)'}
-          {selectedMetric === 'calories' && !hasVaryingTarget && ` (${target!.basalCalories} base)`}
+          {selectedMetric === 'calories' && hasVaryingTarget ? (
+            'Target: baseline plus activity'
+          ) : (
+            <>
+              Target: {chartData[0].target} {getUnit()}
+              {selectedMetric === 'calories' && !hasVaryingTarget && ` (${target!.basalCalories} base)`}
+            </>
+          )}
           {trackSeparately && selectedMetric === 'calories' && (
             <span style={{ color: '#60a5fa', marginLeft: '1rem' }}>
               Baseline: {target!.basalCalories} {getUnit()}
+            </span>
+          )}
+          {trackSeparately && selectedMetric === 'calories' && (
+            <span style={{ color: '#ff8c00', marginLeft: '1rem' }}>
+              Activity Calories
             </span>
           )}
         </p>

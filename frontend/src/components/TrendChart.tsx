@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useActivitySettings } from '../hooks/useActivitySettings';
+import { useActivitySettings } from '../providers/ActivitySettingsProvider';
 import {
   ComposedChart,
   Area,
@@ -163,6 +163,7 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
     fillBase: number | null;
     overFill: number | null;
     underFill: number | null;
+    activityCalories: number | null;
   }>;
 
   // Only show target line for calories (not other nutrients)
@@ -245,6 +246,7 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
           fillBase,
           overFill,
           underFill,
+          activityCalories: week.activityCount > 0 ? Math.round(avgActivity) : null,
         };
       });
   } else {
@@ -283,6 +285,7 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
         fillBase,
         overFill,
         underFill,
+        activityCalories: Math.round(activity),
       };
     });
   }
@@ -547,6 +550,20 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
               />
             )}
 
+            {/* Activity-only calories line */}
+            {trackSeparately && showDynamicTarget && (
+              <Line
+                yAxisId="nutrient"
+                type="monotone"
+                dataKey="activityCalories"
+                stroke="#ff8c00"
+                strokeWidth={1.5}
+                dot={false}
+                connectNulls={true}
+                isAnimationActive={false}
+              />
+            )}
+
             {/* Static target reference line for non-calorie nutrients */}
             {data.nutrientTarget && selectedNutrient !== 'calories' && (
               <ReferenceLine
@@ -613,6 +630,11 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
         {trackSeparately && showDynamicTarget && (
           <span className="legend-item" style={{ color: '#60a5fa' }}>
             {'- -'} Baseline ({data.nutrientTarget} {nutrientConfig.unit})
+          </span>
+        )}
+        {trackSeparately && showDynamicTarget && (
+          <span className="legend-item" style={{ color: '#ff8c00' }}>
+            {'—'} Activity Calories
           </span>
         )}
         {showWeight && hasWeightData && (

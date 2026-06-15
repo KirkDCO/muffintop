@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryProvider } from './providers/QueryProvider';
 import { UserProvider } from './providers/UserProvider';
 import { NutrientProvider } from './providers/NutrientProvider';
+import { ActivitySettingsProvider } from './providers/ActivitySettingsProvider';
 import App from './App';
 import './index.css';
 
@@ -13,7 +14,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <QueryProvider>
         <UserProvider>
           <NutrientProvider>
-            <App />
+            <ActivitySettingsProvider>
+              <App />
+            </ActivitySettingsProvider>
           </NutrientProvider>
         </UserProvider>
       </QueryProvider>
