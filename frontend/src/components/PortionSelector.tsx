@@ -42,6 +42,10 @@ export function PortionSelector({
   const [manualValue, setManualValue] = useState<string>(String(initialValue));
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const lastReportedRef = useRef<{ value: number; display: string } | null>(null);
+  // Capture initialDisplay once at mount — never re-read from the prop, since onChange
+  // causes the parent to update displayQuantity which flows back here and would create
+  // a feedback loop if used as an effect dependency.
+  const initialDisplayRef = useRef(initialDisplay);
 
   // Build portion options based on food type
   const portionOptions: PortionOption[] = [];
@@ -77,29 +81,24 @@ export function PortionSelector({
     }
   }
 
-  // Default to first portion (serving) when available, instead of grams
-  useEffect(() => {
-    if (fdcId && foodDetail?.portions && foodDetail.portions.length > 0 && !hasUserInteracted) {
-      // Default to first portion (usually "serving") instead of grams
-      setSelectedPortionId(String(foodDetail.portions[0].id));
-      setAmount('1');
-    }
-  }, [fdcId, foodDetail?.portions?.length, hasUserInteracted]);
-
-  // Try to auto-detect initial portion from display string
+  // Initialize portion selection when food data loads. Merged from two separate effects to
+  // eliminate the race where they fired independently and set conflicting state. Uses
+  // initialDisplayRef (not the prop) to avoid a feedback loop: onChange → parent updates
+  // displayQuantity → initialDisplay prop changes → effect re-fires with corrupted value.
   useEffect(() => {
     if (hasUserInteracted) return;
     const portions = fdcId ? foodDetail?.portions : customFoodDetail?.portions;
-    if (portions && initialDisplay) {
-      const displayLower = initialDisplay.toLowerCase();
+    if (!portions || portions.length === 0) return;
 
-      // Try to parse amount from display (e.g., "2 cups" -> amount=2)
+    const initDisplay = initialDisplayRef.current;
+
+    if (initDisplay) {
+      const displayLower = initDisplay.toLowerCase();
       const match = displayLower.match(/^([\d./]+)\s*(.*)$/);
       if (match) {
         let parsedAmount = 1;
         const amountStr = match[1];
 
-        // Handle fractions like "1/2"
         if (amountStr.includes('/')) {
           const [num, denom] = amountStr.split('/').map(Number);
           parsedAmount = num / denom;
@@ -109,14 +108,12 @@ export function PortionSelector({
 
         const unitPart = match[2].trim();
 
-        // Detect raw gram entries for USDA foods (stored display format is "84g")
         if (!isServingsMode && unitPart === 'g') {
           setSelectedPortionId('grams');
           setManualValue(String(parsedAmount));
           return;
         }
 
-        // Find matching portion
         for (const portion of portions) {
           const portionLower = portion.description.toLowerCase();
           if (portionLower.includes(unitPart) || unitPart.includes(portionLower.split(' ')[0])) {
@@ -126,11 +123,17 @@ export function PortionSelector({
           }
         }
 
-        // No portion match, keep manual mode with parsed amount
         setAmount(String(parsedAmount));
+        return;
       }
     }
-  }, [fdcId, foodDetail, customFoodDetail, initialDisplay, hasUserInteracted]);
+
+    // No initDisplay or unparseable: default to first portion (USDA foods only)
+    if (fdcId) {
+      setSelectedPortionId(String(portions[0].id));
+      setAmount('1');
+    }
+  }, [fdcId, foodDetail, customFoodDetail, hasUserInteracted, isServingsMode]);
 
   // Calculate value when amount or portion changes
   useEffect(() => {
