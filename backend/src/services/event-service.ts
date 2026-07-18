@@ -9,6 +9,7 @@ interface EventRow {
   event_date: string;
   description: string;
   color: string;
+  rating: number | null;
   created_at: string;
 }
 
@@ -18,9 +19,12 @@ function rowToUserEvent(row: EventRow): UserEvent {
     eventDate: row.event_date,
     description: row.description,
     color: row.color,
+    rating: row.rating,
     createdAt: row.created_at,
   };
 }
+
+const EVENT_COLUMNS = 'id, user_id, event_date, description, color, rating, created_at';
 
 export const eventService = {
   /**
@@ -28,8 +32,7 @@ export const eventService = {
    */
   getByQuery(userId: number, query: EventQuery): UserEvent[] {
     const db = getDb();
-    let sql =
-      'SELECT id, user_id, event_date, description, color, created_at FROM user_event WHERE user_id = ?';
+    let sql = `SELECT ${EVENT_COLUMNS} FROM user_event WHERE user_id = ?`;
     const params: (string | number)[] = [userId];
 
     if (query.startDate && query.endDate) {
@@ -56,7 +59,7 @@ export const eventService = {
     const db = getDb();
     const row = db
       .prepare(
-        'SELECT id, user_id, event_date, description, color, created_at FROM user_event WHERE id = ? AND user_id = ?'
+        `SELECT ${EVENT_COLUMNS} FROM user_event WHERE id = ? AND user_id = ?`
       )
       .get(eventId, userId) as EventRow | undefined;
 
@@ -73,12 +76,24 @@ export const eventService = {
   create(userId: number, input: CreateEventInput): UserEvent {
     const db = getDb();
 
+    const rating = input.rating ?? null;
+
     const result = db
       .prepare(
-        `INSERT INTO user_event (user_id, event_date, description, color)
-         VALUES (?, ?, ?, ?)`
+        `INSERT INTO user_event (user_id, event_date, description, color, rating)
+         VALUES (?, ?, ?, ?, ?)`
       )
-      .run(userId, input.eventDate, input.description, input.color);
+      .run(userId, input.eventDate, input.description, input.color, rating);
+
+    // Ensure a rated-series metadata row exists so correlation analysis can
+    // resolve the series direction (defaults to higher_better; editable via the
+    // rated-series endpoint). Existing rows are left untouched.
+    if (rating !== null) {
+      db.prepare(
+        `INSERT OR IGNORE INTO rated_event_series (user_id, description, color)
+         VALUES (?, ?, ?)`
+      ).run(userId, input.description, input.color);
+    }
 
     return this.getById(userId, Number(result.lastInsertRowid));
   },

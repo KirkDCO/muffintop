@@ -3,13 +3,8 @@ import { useUser } from '../providers/UserProvider';
 import { useNutrients } from '../providers/NutrientProvider';
 import { useNutrientPreferences, useUpdateNutrientPreferences } from '../hooks/useNutrientPreferences';
 import { useTargets, useUpdateTargets } from '../hooks/useTargets';
-import { useWeightHistory } from '../hooks/useWeightMetrics';
 import { NutrientPreferencesEditor } from '../components/NutrientPreferencesEditor';
 import { TargetSetup } from '../components/TargetSetup';
-import { WeightLogger } from '../components/WeightLogger';
-import { WeightTrend } from '../components/WeightTrend';
-import { EventLogger } from '../components/EventLogger';
-import { EventList } from '../components/EventList';
 import type { NutrientKey, NutrientTarget, IntakeType, IntakeTarget, WaterUnit } from '@muffintop/shared/types';
 
 export function Settings() {
@@ -19,7 +14,6 @@ export function Settings() {
   const updatePreferences = useUpdateNutrientPreferences(currentUser?.id ?? 0);
   const { data: targetData, isLoading: loadingTargets } = useTargets();
   const updateTargets = useUpdateTargets();
-  const { data: weightData } = useWeightHistory();
 
   const [selectedNutrients, setSelectedNutrients] = useState<NutrientKey[]>(visibleNutrients);
   const [hasChanges, setHasChanges] = useState(false);
@@ -207,31 +201,6 @@ export function Settings() {
             <span className="save-status error">Failed to save. Please try again.</span>
           )}
         </div>
-      </section>
-
-      <section className="settings-section">
-        <h2>Weight Tracking</h2>
-        <p className="section-description">
-          Track your weight over time to monitor your progress.
-        </p>
-
-        <WeightLogger
-          latestValue={weightData?.latestValue}
-          latestUnit={weightData?.latestUnit}
-        />
-
-        <WeightTrend />
-      </section>
-
-      <section className="settings-section">
-        <h2>Event Tracking</h2>
-        <p className="section-description">
-          Track health events (illness, GI issues, etc.) that appear as colored markers on your
-          trends chart.
-        </p>
-
-        <EventLogger />
-        <EventList />
       </section>
 
       <style>{`

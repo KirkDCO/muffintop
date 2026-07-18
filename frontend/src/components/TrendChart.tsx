@@ -12,6 +12,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { useTrendStats } from '../hooks/useTrendStats';
+import { useRatedSeries } from '../hooks/useRatedSeries';
 import type { TrendTimeRange, NutrientKey, DailyTarget, WeightUnit, EventDataPoint, TargetDirection } from '@muffintop/shared/types';
 
 interface TrendChartProps {
@@ -94,7 +95,9 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
   const [selectedNutrient, setSelectedNutrient] = useState<NutrientKey | null>(null);
   const [showWeight, setShowWeight] = useState(true);
   const [showEvents, setShowEvents] = useState(true);
+  const [ratedOverlay, setRatedOverlay] = useState('');
   const { trackSeparately } = useActivitySettings();
+  const { data: ratedSeries } = useRatedSeries();
 
   // Set default nutrient when available nutrients change
   useEffect(() => {
@@ -109,7 +112,8 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
 
   const { data, isLoading } = useTrendStats({
     timeRange,
-    nutrient: selectedNutrient || 'calories'
+    nutrient: selectedNutrient || 'calories',
+    ratedEvent: ratedOverlay || undefined,
   });
 
   const nutrientConfig = availableNutrients.find((n) => n.key === selectedNutrient) || ALL_NUTRIENTS[0];
@@ -150,6 +154,12 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
   // Map activity calories by date for dynamic target calculation
   const activityByDate = new Map((data.activityData || []).map((a) => [a.date, a.activityCalories]));
 
+  // Rated-series overlay values (1-10) by date
+  const ratingByDate = new Map((data.ratedEventData || []).map((r) => [r.date, r.rating]));
+  const hasRatingData = (data.ratedEventData || []).length > 0;
+  const ratedColor =
+    data.ratedEventData && data.ratedEventData.length > 0 ? data.ratedEventData[0].color : '#e879f9';
+
   // For longer time ranges, aggregate data to reduce clutter
   const shouldAggregate = data.nutrientData.length > 60;
 
@@ -164,6 +174,7 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
     overFill: number | null;
     underFill: number | null;
     activityCalories: number | null;
+    rating: number | null;
   }>;
 
   // Only show target line for calories (not other nutrients)
@@ -177,6 +188,8 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
       weights: typeof data.weightData;
       activitySum: number;
       activityCount: number;
+      ratingSum: number;
+      ratingCount: number;
     }>();
 
     for (const point of data.nutrientData) {
@@ -187,7 +200,7 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
       const weekKey = weekStart.toISOString().split('T')[0];
 
       if (!weeklyData.has(weekKey)) {
-        weeklyData.set(weekKey, { nutrientSum: 0, nutrientCount: 0, weights: [], activitySum: 0, activityCount: 0 });
+        weeklyData.set(weekKey, { nutrientSum: 0, nutrientCount: 0, weights: [], activitySum: 0, activityCount: 0, ratingSum: 0, ratingCount: 0 });
       }
       const week = weeklyData.get(weekKey)!;
       if (point.value !== null) {
@@ -198,6 +211,12 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
       const activity = activityByDate.get(point.date) || 0;
       week.activitySum += activity;
       week.activityCount++;
+      // Include rating for this day in weekly average
+      const rating = ratingByDate.get(point.date);
+      if (rating != null) {
+        week.ratingSum += rating;
+        week.ratingCount++;
+      }
     }
 
     // Add weight data to weeks
@@ -247,6 +266,7 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
           overFill,
           underFill,
           activityCalories: week.activityCount > 0 ? Math.round(avgActivity) : null,
+          rating: week.ratingCount > 0 ? Math.round((week.ratingSum / week.ratingCount) * 10) / 10 : null,
         };
       });
   } else {
@@ -286,6 +306,7 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
         overFill,
         underFill,
         activityCalories: Math.round(activity),
+        rating: ratingByDate.get(point.date) ?? null,
       };
     });
   }
@@ -362,12 +383,28 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
             />
             Events
           </label>
+
+          {ratedSeries && ratedSeries.length > 0 && (
+            <select
+              value={ratedOverlay}
+              onChange={(e) => setRatedOverlay(e.target.value)}
+              className="nutrient-select"
+              title="Overlay a rated series (1-10)"
+            >
+              <option value="">No rating overlay</option>
+              {ratedSeries.map((s) => (
+                <option key={s.description} value={s.description}>
+                  {s.description}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 
       <div className="chart-container">
         <ResponsiveContainer width="100%" height={250}>
-          <ComposedChart data={chartData} margin={{ top: 10, right: showWeight && hasWeightData ? 50 : 10, left: -10, bottom: 0 }}>
+          <ComposedChart data={chartData} margin={{ top: 10, right: (showWeight && hasWeightData) || (ratedOverlay && hasRatingData) ? 50 : 10, left: -10, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
             <XAxis
               dataKey="displayDate"
@@ -401,6 +438,20 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
                 tickLine={false}
                 axisLine={false}
                 width={40}
+              />
+            )}
+
+            {/* Right Y-axis for rated-series overlay (1-10) */}
+            {ratedOverlay && hasRatingData && (
+              <YAxis
+                yAxisId="rating"
+                orientation="right"
+                domain={[1, 10]}
+                ticks={[1, 5, 10]}
+                tick={{ fill: ratedColor, fontSize: 11 }}
+                tickLine={false}
+                axisLine={false}
+                width={28}
               />
             )}
 
@@ -440,6 +491,9 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
                       if (entry.dataKey === 'weight') {
                         displayValue = `${value.toFixed(1)} ${preferredWeightUnit}`;
                         displayName = 'Weight';
+                      } else if (entry.dataKey === 'rating') {
+                        displayValue = `${value.toFixed(1)} / 10`;
+                        displayName = ratedOverlay;
                       } else if (entry.dataKey === 'target') {
                         displayValue = `${Math.round(value)} ${nutrientConfig.unit}`;
                         displayName = 'Target';
@@ -589,6 +643,20 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
               />
             )}
 
+            {/* Rated-series overlay line (1-10) */}
+            {ratedOverlay && hasRatingData && (
+              <Line
+                yAxisId="rating"
+                type="monotone"
+                dataKey="rating"
+                stroke={ratedColor}
+                strokeWidth={2}
+                dot={{ fill: ratedColor, r: 3 }}
+                connectNulls={true}
+                isAnimationActive={false}
+              />
+            )}
+
             {/* Event markers as vertical lines */}
             {showEvents && hasEventData && Array.from(eventsByDisplayDate.entries()).map(([displayDate, events]) => {
               // Use the first event's color for the line
@@ -652,6 +720,14 @@ export function TrendChart({ target, onDateSelect }: TrendChartProps) {
         )}
         {showEvents && !hasEventData && (
           <span className="legend-item muted">No events in this period</span>
+        )}
+        {ratedOverlay && hasRatingData && (
+          <span className="legend-item" style={{ color: ratedColor }}>
+            {'●'} {ratedOverlay} (1-10)
+          </span>
+        )}
+        {ratedOverlay && !hasRatingData && (
+          <span className="legend-item muted">No ratings for {ratedOverlay} in this period</span>
         )}
       </div>
 

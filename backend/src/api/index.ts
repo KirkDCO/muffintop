@@ -12,6 +12,8 @@ import { eventsRouter } from './events.js';
 import { intakeRouter } from './intake.js';
 import { tblspRouter } from './tblsp.js';
 import { eventAnalysisRouter } from './event-analysis.js';
+import { eventCorrelationRouter } from './event-correlation.js';
+import { ratedSeriesRouter } from './rated-series.js';
 
 export const apiRouter = Router();
 
@@ -29,3 +31,5 @@ apiRouter.use('/users/:userId/events', eventsRouter);
 apiRouter.use('/users/:userId/intake', intakeRouter);
 apiRouter.use('/tblsp', tblspRouter);
 apiRouter.use('/users/:userId/analysis/events', eventAnalysisRouter);
+apiRouter.use('/users/:userId/analysis/event-correlation', eventCorrelationRouter);
+apiRouter.use('/users/:userId/rated-series', ratedSeriesRouter);

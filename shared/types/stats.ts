@@ -52,6 +52,13 @@ export interface EventDataPoint {
   color: string;
 }
 
+export interface RatedEventDataPoint {
+  date: string;
+  rating: number;
+  description: string;
+  color: string;
+}
+
 export interface ActivityDataPoint {
   date: string;
   activityCalories: number;
@@ -73,9 +80,12 @@ export interface LongitudinalTrendResult {
   activityData: ActivityDataPoint[];
   // User events (sparse - only dates with events)
   eventData: EventDataPoint[];
+  // Daily ratings for a selected rated series (sparse; only present when requested)
+  ratedEventData?: RatedEventDataPoint[];
 }
 
 export interface LongitudinalTrendQuery {
   timeRange: TrendTimeRange;
   nutrient?: string; // Which nutrient to include (defaults to calories)
+  ratedEvent?: string; // Optional rated series description to overlay
 }

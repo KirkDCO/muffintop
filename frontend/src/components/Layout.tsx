@@ -21,6 +21,7 @@ export function Layout() {
           </NavLink>
           <NavLink to="/foods">Foods</NavLink>
           <NavLink to="/recipes">Recipes</NavLink>
+          <NavLink to="/tracking">Tracking</NavLink>
           <NavLink to="/analysis">Analysis</NavLink>
           <NavLink to="/settings">Settings</NavLink>
         </nav>

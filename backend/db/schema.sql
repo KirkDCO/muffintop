@@ -359,6 +359,36 @@ CREATE TABLE IF NOT EXISTS user_nutrient_preferences (
 );
 
 -- ============================================
+-- User Events (discrete life events + 1-10 daily ratings)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS user_event (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+  event_date TEXT NOT NULL,
+  description TEXT NOT NULL,
+  color TEXT NOT NULL DEFAULT '#ff6b6b',
+  rating INTEGER, -- nullable; NULL = discrete event, 1-10 = rated event
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(user_id, event_date, description)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_event_user_date ON user_event(user_id, event_date);
+
+-- Per-series metadata for rated events (direction + color), keyed by (user_id, description)
+CREATE TABLE IF NOT EXISTS rated_event_series (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+  description TEXT NOT NULL,
+  direction TEXT NOT NULL DEFAULT 'higher_better', -- 'higher_better' | 'higher_worse'
+  color TEXT NOT NULL DEFAULT '#ff6b6b',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(user_id, description)
+);
+
+CREATE INDEX IF NOT EXISTS idx_rated_event_series_user ON rated_event_series(user_id);
+
+-- ============================================
 -- Migrations Tracking
 -- ============================================
 

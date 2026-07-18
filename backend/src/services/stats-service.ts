@@ -8,6 +8,7 @@ import type {
   NutrientDataPoint,
   WeightDataPoint,
   EventDataPoint,
+  RatedEventDataPoint,
   ActivityDataPoint,
   LongitudinalTrendResult,
   WeightUnit,
@@ -241,7 +242,8 @@ export function getTrendData(
   userId: number,
   timeRange: TrendTimeRange,
   nutrient: NutrientKey = 'calories',
-  today?: string
+  today?: string,
+  ratedEvent?: string
 ): LongitudinalTrendResult {
   const db = getDb();
   const { startDate, endDate } = getDateRangeForTimeRange(timeRange, today);
@@ -325,6 +327,32 @@ export function getTrendData(
     color: row.color,
   }));
 
+  // Optional rated-series overlay (daily 1-10 ratings for one series)
+  let ratedEventData: RatedEventDataPoint[] | undefined;
+  if (ratedEvent) {
+    const ratedStmt = db.prepare(`
+      SELECT ue.event_date as date, ue.rating as rating,
+        COALESCE(res.color, ue.color) as color
+      FROM user_event ue
+      LEFT JOIN rated_event_series res
+        ON res.user_id = ue.user_id AND res.description = ue.description
+      WHERE ue.user_id = ? AND ue.description = ? AND ue.rating IS NOT NULL
+        AND ue.event_date >= ? AND ue.event_date <= ?
+      ORDER BY ue.event_date ASC
+    `);
+    const ratedRows = ratedStmt.all(userId, ratedEvent, startDate, endDate) as Array<{
+      date: string;
+      rating: number;
+      color: string;
+    }>;
+    ratedEventData = ratedRows.map((row) => ({
+      date: row.date,
+      rating: row.rating,
+      description: ratedEvent,
+      color: row.color,
+    }));
+  }
+
   // Get activity calories per day (for dynamic calorie target line)
   const activityStmt = db.prepare(`
     SELECT
@@ -384,6 +412,7 @@ export function getTrendData(
     nutrientTargetDirection,
     activityData,
     eventData,
+    ratedEventData,
   };
 }
 

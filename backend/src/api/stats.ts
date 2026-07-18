@@ -18,6 +18,7 @@ const trendQuerySchema = z.object({
   timeRange: z.enum(['week', 'month', '3months', '6months', 'year', 'lastyear', 'all']).default('month'),
   nutrient: z.string().optional(),
   today: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  ratedEvent: z.string().max(100).optional(),
 });
 
 // All routes require user context
@@ -53,13 +54,14 @@ router.get('/daily', validateQuery(dailyStatsQuerySchema), (req, res) => {
  */
 router.get('/trends', validateQuery(trendQuerySchema), (req, res) => {
   const query = req.query as unknown as z.infer<typeof trendQuerySchema>;
-  const { timeRange, nutrient, today } = query;
+  const { timeRange, nutrient, today, ratedEvent } = query;
 
   const result = statsService.getTrendData(
     req.userId!,
     timeRange as TrendTimeRange,
     (nutrient as NutrientKey) || 'calories',
-    today
+    today,
+    ratedEvent
   );
 
   res.json(result);

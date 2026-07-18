@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useEvents } from '../hooks/useEvents';
 import { useEventAnalysis } from '../hooks/useEventAnalysis';
 import { useNutrients } from '../providers/NutrientProvider';
+import { RatedCorrelation } from '../components/RatedCorrelation';
 import {
   ALL_NUTRIENT_KEYS,
   NUTRIENT_REGISTRY,
@@ -22,10 +23,14 @@ function getMetricLabel(key: AnalysisMetricKey): string {
   return NUTRIENT_REGISTRY[key as NutrientKey].displayName;
 }
 
+type AnalysisView = 'comparison' | 'correlation';
+
 export function EventAnalysis() {
   const { data: events } = useEvents();
   const { visibleNutrients } = useNutrients();
   const analysis = useEventAnalysis();
+
+  const [view, setView] = useState<AnalysisView>('comparison');
 
   // Config state
   const [selectionMode, setSelectionMode] = useState<EventSelectionMode>('description');
@@ -46,18 +51,23 @@ export function EventAnalysis() {
   );
   const [showAllFoods, setShowAllFoods] = useState(false);
 
-  // Distinct descriptions from events
+  // Discrete events only (rated events are handled in the correlation view)
+  const discreteEvents = useMemo(
+    () => (events ? events.filter((e) => e.rating == null) : []),
+    [events]
+  );
+
+  // Distinct descriptions from discrete events
   const descriptions = useMemo(() => {
-    if (!events) return [];
-    const set = new Set(events.map((e) => e.description));
+    const set = new Set(discreteEvents.map((e) => e.description));
     return Array.from(set).sort();
-  }, [events]);
+  }, [discreteEvents]);
 
   // Events sorted for instance picker
-  const sortedEvents = useMemo(() => {
-    if (!events) return [];
-    return [...events].sort((a, b) => b.eventDate.localeCompare(a.eventDate));
-  }, [events]);
+  const sortedEvents = useMemo(
+    () => [...discreteEvents].sort((a, b) => b.eventDate.localeCompare(a.eventDate)),
+    [discreteEvents]
+  );
 
   const toggleMetric = (key: AnalysisMetricKey) => {
     setSelectedMetrics((prev) => {
@@ -91,6 +101,32 @@ export function EventAnalysis() {
   return (
     <div style={{ maxWidth: 960, margin: '0 auto' }}>
       <h2>Event Analysis</h2>
+
+      {/* View toggle */}
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
+        {(['comparison', 'correlation'] as AnalysisView[]).map((v) => (
+          <button
+            key={v}
+            onClick={() => setView(v)}
+            style={{
+              padding: '0.45rem 0.9rem',
+              borderRadius: 4,
+              border: '1px solid #555',
+              background: view === v ? '#646cff' : 'transparent',
+              color: 'white',
+              cursor: 'pointer',
+              fontWeight: 600,
+            }}
+          >
+            {v === 'comparison' ? 'Event comparison' : 'Rated correlation'}
+          </button>
+        ))}
+      </div>
+
+      {view === 'correlation' ? (
+        <RatedCorrelation />
+      ) : (
+        <>
       <p style={{ color: '#aaa', marginBottom: '1.5rem' }}>
         Compare nutrient intake and food choices before events against your baseline.
       </p>
@@ -251,6 +287,8 @@ export function EventAnalysis() {
 
       {/* Results */}
       {result && <AnalysisResults result={result} showAllFoods={showAllFoods} setShowAllFoods={setShowAllFoods} />}
+        </>
+      )}
     </div>
   );
 }

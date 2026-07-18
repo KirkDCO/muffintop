@@ -17,6 +17,7 @@ export const createEventSchema = z.object({
     .min(1, 'Description is required')
     .max(100, 'Description must be 100 characters or less'),
   color: colorSchema,
+  rating: z.number().int().min(1).max(10).nullable().optional(),
 });
 
 export const eventQuerySchema = z.object({
