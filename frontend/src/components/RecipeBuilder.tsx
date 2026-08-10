@@ -7,6 +7,16 @@ interface RecipeIngredientDraft extends CreateRecipeIngredientInput {
   foodName: string;
 }
 
+// Stable client-side id used as the React key so that deleting/reordering
+// ingredients keeps each row's local input state bound to its own ingredient
+// (index keys would leave a deleted row's values behind on the row that shifts up).
+let uidCounter = 0;
+const nextUid = () => `ing-${uidCounter++}`;
+
+interface KeyedIngredientDraft extends RecipeIngredientDraft {
+  _uid: string;
+}
+
 interface RecipeBuilderProps {
   initialName?: string;
   initialServings?: number;
@@ -29,7 +39,9 @@ export function RecipeBuilder({
   const [name, setName] = useState(initialName);
   const [servings, setServings] = useState(String(initialServings));
   const [isShared, setIsShared] = useState(initialIsShared);
-  const [ingredients, setIngredients] = useState<RecipeIngredientDraft[]>(initialIngredients);
+  const [ingredients, setIngredients] = useState<KeyedIngredientDraft[]>(() =>
+    initialIngredients.map((ing) => ({ ...ing, _uid: nextUid() }))
+  );
   const [showFoodSearch, setShowFoodSearch] = useState(false);
 
   const handleAddFood = (food: FoodSummary) => {
@@ -39,6 +51,7 @@ export function RecipeBuilder({
         foodId: food.fdcId,
         quantityGrams: 100,
         foodName: food.description,
+        _uid: nextUid(),
       },
     ]);
     setShowFoodSearch(false);
@@ -51,6 +64,7 @@ export function RecipeBuilder({
         customFoodId: customFood.id,
         quantityGrams: 1, // Custom foods use servings, not grams - default to 1 serving
         foodName: customFood.name,
+        _uid: nextUid(),
       },
     ]);
     setShowFoodSearch(false);
@@ -63,6 +77,7 @@ export function RecipeBuilder({
         ingredientRecipeId: recipe.id,
         quantityGrams: 1, // Recipes use servings - default to 1 serving
         foodName: recipe.name,
+        _uid: nextUid(),
       },
     ]);
     setShowFoodSearch(false);
@@ -158,7 +173,7 @@ export function RecipeBuilder({
             <div className="ingredients-list">
               {ingredients.map((ing, index) => (
                 <IngredientRow
-                  key={index}
+                  key={ing._uid}
                   foodName={ing.foodName}
                   fdcId={ing.foodId}
                   customFoodId={ing.customFoodId}

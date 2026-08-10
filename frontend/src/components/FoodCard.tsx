@@ -72,6 +72,14 @@ export function FoodCard({ food, onClick }: FoodCardProps) {
           text-transform: capitalize;
           color: #666;
         }
+        @media (prefers-color-scheme: light) {
+          .nutrient {
+            color: #555;
+          }
+          .nutrient strong {
+            color: #1a1a1a;
+          }
+        }
       `}</style>
     </div>
   );
